@@ -64,7 +64,7 @@ function App() {
     { key: 'human_capital', name: 'Human Capital' },
     { key: 'global_player', name: 'Global Player' },
     { key: 'regulatory', name: 'Regulatory' },
-    { key: 'raw_materials', name: 'Raw Materials' },
+    { key: 'raw_materials', name: 'Specialized Material and Wafers' },
     { key: 'chip_design', name: 'Chip Design' },
     { key: 'manufacturing', name: 'Manufacturing' },
     { key: 'equipment', name: 'Equipment' },
