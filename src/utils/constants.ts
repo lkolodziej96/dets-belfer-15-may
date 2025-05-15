@@ -180,7 +180,7 @@ export const subsectorDefinitions = {
     equipment: 'Equipment',
     assembly_testing: 'Assembly Testing',
     global_player: 'Global Player',
-    raw_materials: 'Raw Materials',
+    raw_materials: 'Specialized Materials and Wafers',
     regulatory: 'Regulatory'
   },
   biotech: {
