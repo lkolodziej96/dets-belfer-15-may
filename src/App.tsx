@@ -295,23 +295,17 @@ function App() {
     return overviewColumns;
   };
 
-const Dashboard = () => {
-  // Your state, props, etc.
-  const { viewState } = useContext(SomeContext);
-
-  // 🔹 Put this here:
-  const formatSectorLabel = (sector) => {
+  const formatSectorLabel = (sector: string | undefined) => {
     if (!sector) return 'Sector';
 
-    const acronymOverrides = {
+    const acronymOverrides: Record<string, string> = {
       ai: 'AI',
-      
     };
 
     const lower = sector.toLowerCase();
     return acronymOverrides[lower] || (lower.charAt(0).toUpperCase() + lower.slice(1));
   };
-  
+
   return (
     <div className="w-[1200px] mx-auto bg-gray-50">
       {/* Header */}
