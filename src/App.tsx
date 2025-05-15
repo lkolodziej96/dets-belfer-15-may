@@ -312,7 +312,7 @@ function App() {
           <div className="text-center">
             <div className="inline-block bg-white rounded-2xl shadow-xl px-8 py-4 border border-gray-100">
               <h1 className="text-4xl font-bold bg-gradient-to-r from-[#962437] to-[#d4526d] bg-clip-text text-transparent">
-                Critical and Emerging Technologies Index Dashboard
+                Critical and Emerging Technologies Dashboard
               </h1>
             </div>
           </div>
