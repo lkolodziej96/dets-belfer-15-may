@@ -295,6 +295,23 @@ function App() {
     return overviewColumns;
   };
 
+const Dashboard = () => {
+  // Your state, props, etc.
+  const { viewState } = useContext(SomeContext);
+
+  // 🔹 Put this here:
+  const formatSectorLabel = (sector) => {
+    if (!sector) return 'Sector';
+
+    const acronymOverrides = {
+      ai: 'AI',
+      
+    };
+
+    const lower = sector.toLowerCase();
+    return acronymOverrides[lower] || (lower.charAt(0).toUpperCase() + lower.slice(1));
+  };
+  
   return (
     <div className="w-[1200px] mx-auto bg-gray-50">
       {/* Header */}
@@ -330,7 +347,7 @@ function App() {
           <div className="w-60 flex-shrink-0">
             <div className="bg-white rounded-xl shadow-lg p-6 sticky top-8 border border-gray-100">
               <h2 className="text-xl font-semibold mb-6 text-gray-800">
-                {viewState.type === 'sector' ? `${viewState.sector.charAt(0).toUpperCase() + viewState.sector.slice(1).toLowerCase()} Pillars` : 'Sector Weights'}
+                {viewState.type === 'sector' ? `${formatSectorLabel(viewState.sector)} Pillar Weights` : 'Sector Weights'}
               </h2>
               <SectorWeights 
                 weights={
