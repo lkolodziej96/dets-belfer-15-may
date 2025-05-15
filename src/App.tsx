@@ -330,7 +330,7 @@ function App() {
           <div className="w-60 flex-shrink-0">
             <div className="bg-white rounded-xl shadow-lg p-6 sticky top-8 border border-gray-100">
               <h2 className="text-xl font-semibold mb-6 text-gray-800">
-                {viewState.type === 'sector' ? `${viewState.sector?.toUpperCase()} Pillars` : 'Sector Weights'}
+                {viewState.type === 'sector' ? `${viewState.sector.charAt(0).toUpperCase() + viewState.sector.slice(1).toLowerCase()} Pillars` : 'Sector Weights'}
               </h2>
               <SectorWeights 
                 weights={
