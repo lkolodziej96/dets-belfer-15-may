@@ -173,7 +173,7 @@ export const subsectorDefinitions = {
     quantum_computing: 'Quantum Computing'
   },
   semiconductors: {
-    chip_design: 'Chip Design',
+    chip_design: 'Chip Design and Tools',
     manufacturing: 'Manufacturing', 
     economic_resources: 'Economic Resources',
     human_capital: 'Human Capital',
@@ -199,10 +199,10 @@ export const subsectorDefinitions = {
     economic_resources: 'Economic Resources',
     global_player: 'Global Player',
     human_capital: 'Human Capital',
-    pnt: 'PNT',
+    pnt: 'Position, Navigation, and Timing',
     regulatory: 'Regulatory',
     remote_sensing: 'Remote Sensing',
-    science_exploration: 'Science & Exploration',
+    science_exploration: 'Science and Exploration',
     telecommunications: 'Telecommunications',
     security: 'Security'
   }
