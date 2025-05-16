@@ -65,10 +65,10 @@ function App() {
     { key: 'global_player', name: 'Global Player' },
     { key: 'regulatory', name: 'Regulatory' },
     { key: 'raw_materials', name: 'Specialized Material and Wafers' },
-    { key: 'chip_design', name: 'Chip Design' },
-    { key: 'manufacturing', name: 'Manufacturing' },
+    { key: 'chip_design', name: 'Chip Design and Tools' },
+    { key: 'manufacturing', name: 'Manufacturing and Fabrication' },
     { key: 'equipment', name: 'Equipment' },
-    { key: 'assembly_testing', name: 'Assembly Testing' }
+    { key: 'assembly_testing', name: 'Assembly and Testing' }
   ];
 
   const biotechColumns = [
@@ -89,9 +89,9 @@ function App() {
     { key: 'security', name: 'Security' },
     { key: 'global_player', name: 'Global Player' },
     { key: 'regulatory', name: 'Regulatory' },
-    { key: 'domestic_launch_capability', name: 'Launch Capability' },
-    { key: 'science_exploration', name: 'Science & Exploration' },
-    { key: 'pnt', name: 'PNT' },
+    { key: 'domestic_launch_capability', name: 'Domestic Launch Capability' },
+    { key: 'science_exploration', name: 'Science and Exploration' },
+    { key: 'pnt', name: 'Position, Navigation, and Timing' },
     { key: 'telecommunications', name: 'Telecommunications' },
     { key: 'remote_sensing', name: 'Remote Sensing' }
   ];
