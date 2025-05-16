@@ -195,7 +195,7 @@ export const subsectorDefinitions = {
     vaccine_research: 'Vaccine Research'
   },
   space: {
-    domestic_launch_capability: 'Launch Capability',
+    domestic_launch_capability: 'Domestic Launch Capability',
     economic_resources: 'Economic Resources',
     global_player: 'Global Player',
     human_capital: 'Human Capital',
