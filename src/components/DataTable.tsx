@@ -199,7 +199,7 @@ const DataTable: React.FC<Props> = ({
     const rect = event.currentTarget.getBoundingClientRect();
     setTooltipContent(name);
     setTooltipPosition({
-      x: rect.left + window.scrollX,
+      x: rect.left + window.scrollX + (rect.width / 2),
       y: rect.bottom + window.scrollY
     });
     setShowTooltip(true);
@@ -213,7 +213,7 @@ const DataTable: React.FC<Props> = ({
     <div className="overflow-hidden relative">
       {showTooltip && (
         <div
-          className="absolute z-50 bg-gray-900 text-white px-3 py-2 rounded-md text-sm shadow-lg"
+          className="fixed z-50 bg-gray-900 text-white px-3 py-2 rounded-md text-sm shadow-lg"
           style={{
             left: tooltipPosition.x,
             top: tooltipPosition.y + 4,
