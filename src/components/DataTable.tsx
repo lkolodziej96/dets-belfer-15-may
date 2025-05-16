@@ -336,7 +336,7 @@ const DataTable: React.FC<Props> = ({
                       color: columnScores[index] > maxScores[key] * 0.5 ? 'white' : '#1a202c'
                     }}
                   >
-                    {columnScores[index].toFixed(3)}
+                    {viewState.type === 'main' ? (columnScores[index] * 100).toFixed(1) : columnScores[index].toFixed(3)}
                   </td>
                 ))}
                 <td 
@@ -351,7 +351,7 @@ const DataTable: React.FC<Props> = ({
                     color: total > maxScores.totalScore * 0.5 ? 'white' : '#1a202c'
                   }}
                 >
-                  {total.toFixed(3)}
+                  {viewState.type === 'main' ? (total * 100).toFixed(1) : total.toFixed(3)}
                 </td>
               </tr>
             );

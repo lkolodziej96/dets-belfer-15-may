@@ -48,7 +48,7 @@ const BarChart: React.FC<Props> = ({
 
     // Calculate sector scores based on subsector weights
     const calculateSectorScore = (subsectorData: Record<string, number> = {}, weights: Record<string, number>, sectorWeight: number = 1) => {
-      return Object.entries(subsectorData).reduce((total, [key, value]) => {
+      return Object.entries(subsectorData || {}).reduce((total, [key, value]) => {
         return total + ((value ?? 0) * (weights[key] ?? 0));
       }, 0) * sectorWeight;
     };
@@ -192,7 +192,7 @@ const BarChart: React.FC<Props> = ({
     if (yAxis.empty()) {
       g.append("g")
         .attr("class", "y-axis")
-        .call(d3.axisLeft(y).ticks(8).tickFormat(d => d.toString()))
+        .call(d3.axisLeft(y).ticks(8).tickFormat(d => viewState.type === 'main' ? `${(Number(d) * 100).toFixed(1)}` : d.toString()))
         .selectAll("text")
         .style("font-family", "'Inter', 'Helvetica', 'Arial', sans-serif")
         .style("font-size", "11px")
@@ -200,7 +200,7 @@ const BarChart: React.FC<Props> = ({
     } else {
       yAxis.transition()
         .duration(750)
-        .call(d3.axisLeft(y).ticks(8).tickFormat(d => d.toString()))
+        .call(d3.axisLeft(y).ticks(8).tickFormat(d => viewState.type === 'main' ? `${(Number(d) * 100).toFixed(1)}` : d.toString()))
         .selectAll("text")
         .style("font-family", "'Inter', 'Helvetica', 'Arial', sans-serif")
         .style("font-size", "11px")
@@ -310,7 +310,7 @@ const BarChart: React.FC<Props> = ({
       .style("stroke-width", (d) => selectedCountries.includes(d.data.country) ? "1px" : "0")
       .style("filter", (d) =>
         selectedCountries.includes(d.data.country)
-          ? "drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1))"
+          ?  "drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1))"
           : "none"
       );
 
@@ -422,7 +422,7 @@ const BarChart: React.FC<Props> = ({
                   ${sector.toUpperCase()}
                 </div>
                 <div style="color: ${sector === hoveredKey ? '#2D3748' : '#718096'};">
-                  ${score.toFixed(3)}
+                  ${viewState.type === 'main' ? (score * 100).toFixed(1) : score.toFixed(3)}
                 </div>
               </div>
             `;
@@ -459,7 +459,7 @@ const BarChart: React.FC<Props> = ({
         tooltipContent += `
           </div>
           <div style="font-weight: 600; color: #2D3748; border-top: 1px solid #E2E8F0; padding-top: 6px;">
-            Total Score: ${totalScore.toFixed(3)}
+            Total Score: ${viewState.type === 'main' ? (totalScore * 100).toFixed(1) : totalScore.toFixed(3)}
           </div>
         `;
 

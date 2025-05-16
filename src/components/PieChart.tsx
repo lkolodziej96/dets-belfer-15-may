@@ -233,7 +233,7 @@ const PieChart: React.FC<Props> = ({
             <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 4px;">
               <span style="color: #4A5568; font-size: 14px;">Score</span>
               <span style="font-weight: 600; color: #2D3748; font-size: 15px;">
-                ${value.toFixed(3)}
+                ${viewState.type === 'main' ? (value * 100).toFixed(1) : value.toFixed(3)}
               </span>
             </div>
             <div style="display: flex; justify-content: space-between; align-items: baseline;">
