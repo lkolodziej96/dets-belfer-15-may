@@ -174,7 +174,7 @@ export const subsectorDefinitions = {
   },
   semiconductors: {
     chip_design: 'Chip Design and Tools',
-    manufacturing: 'Manufacturing', 
+    manufacturing: 'Manufacturing and Fabrication', 
     economic_resources: 'Economic Resources',
     human_capital: 'Human Capital',
     equipment: 'Equipment',
