@@ -178,7 +178,7 @@ export const subsectorDefinitions = {
     economic_resources: 'Economic Resources',
     human_capital: 'Human Capital',
     equipment: 'Equipment',
-    assembly_testing: 'Assembly Testing',
+    assembly_testing: 'Assembly and Testing',
     global_player: 'Global Player',
     raw_materials: 'Specialized Materials and Wafers',
     regulatory: 'Regulatory'
