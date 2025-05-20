@@ -37,6 +37,7 @@ export function excelToJsonPlugin({ excludeSheets }: { excludeSheets?: string[] 
 
 // https://vitejs.dev/config/
 export default defineConfig({
+  base: '/dets-belfer-15-may',
   plugins: [
     react(),
     excelToJsonPlugin({ excludeSheets: ['summary'] }),
