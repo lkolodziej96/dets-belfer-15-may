@@ -1,30 +1,30 @@
 // Map of country names to their official names in the world map data
 const COUNTRY_NAME_MAPPINGS: { [key: string]: string } = {
-  'USA': 'United States',
-  'US': 'United States',
+  USA: 'United States',
+  US: 'United States',
   'United States of America': 'United States',
   'U.S.A.': 'United States',
-  'UK': 'United Kingdom',
-  'PRC': 'China',
-  'People\'s Republic of China': 'China',
-  'Korea': 'South Korea',
+  UK: 'United Kingdom',
+  PRC: 'China',
+  "People's Republic of China": 'China',
+  Korea: 'South Korea',
   'Republic of Korea': 'South Korea',
   'Korea, Republic of': 'South Korea',
   'Korea, Dem. Rep.': 'North Korea',
-  'Democratic People\'s Republic of Korea': 'North Korea',
-  'DPRK': 'North Korea',
+  "Democratic People's Republic of Korea": 'North Korea',
+  DPRK: 'North Korea',
   'Russian Federation': 'Russia',
   'Czech Republic': 'Czechia',
-  'UAE': 'United Arab Emirates',
+  UAE: 'United Arab Emirates',
   'U.A.E.': 'United Arab Emirates',
-  'United Arab Emirates': 'U.A.E.'  // Add reverse mapping
+  'United Arab Emirates': 'U.A.E.', // Add reverse mapping
 };
 
 export function validateAndProcessData(rawData: any[]): ProcessedData {
   const validation: ValidationResult = {
     isValid: true,
     errors: [],
-    warnings: []
+    warnings: [],
   };
 
   // Check if data is empty
@@ -41,8 +41,8 @@ export function validateAndProcessData(rawData: any[]): ProcessedData {
 
   // Check required columns
   const columns = Object.keys(rawData[0] || {});
-  const missingColumns = REQUIRED_COLUMNS.filter(col => !columns.includes(col));
-  
+  const missingColumns = REQUIRED_COLUMNS.filter((col) => !columns.includes(col));
+
   if (missingColumns.length > 0) {
     validation.isValid = false;
     validation.errors.push(`Missing required columns: ${missingColumns.join(', ')}`);
@@ -86,7 +86,7 @@ export function validateAndProcessData(rawData: any[]): ProcessedData {
 
     Object.entries(SECTOR_WEIGHTS).forEach(([sector, weight]) => {
       const value = parseFloat(mappedRow[sector]);
-      
+
       if (isNaN(value)) {
         validation.errors.push(`Invalid ${sector} value for ${mappedRow.country}`);
         hasInvalidScore = true;
@@ -122,9 +122,9 @@ export function validateAndProcessData(rawData: any[]): ProcessedData {
         quantum: mappedRow.quantum,
         semiconductors: mappedRow.semiconductors,
         biotech: mappedRow.biotech,
-        space: mappedRow.space
+        space: mappedRow.space,
       },
-      sectorDetails: {}
+      sectorDetails: {},
     };
 
     processedData.push(countryData);
@@ -137,14 +137,14 @@ export function validateAndProcessData(rawData: any[]): ProcessedData {
 
   return {
     data: processedData,
-    validation
+    validation,
   };
 }
 
 export function standardizeCountryNames(data: CountryData[]): CountryData[] {
-  return data.map(item => ({
+  return data.map((item) => ({
     ...item,
-    country: COUNTRY_NAME_MAPPINGS[item.country] || item.country
+    country: COUNTRY_NAME_MAPPINGS[item.country] || item.country,
   }));
 }
 

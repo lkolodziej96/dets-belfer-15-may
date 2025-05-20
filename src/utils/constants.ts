@@ -2,69 +2,69 @@ import type { SectorWeights } from '../types';
 
 export const defaultSectorWeights = {
   ai: 0.25,
-  biotech: 0.20,
+  biotech: 0.2,
   semiconductors: 0.35,
   space: 0.15,
-  quantum: 0.05
+  quantum: 0.05,
 };
 
 export const defaultAISubsectorWeights = {
   algorithms: 0.15,
   computing_power: 0.15,
   data: 0.15,
-  economic_resources: 0.20,
+  economic_resources: 0.2,
   global_player: 0.025,
-  human_capital: 0.20,
+  human_capital: 0.2,
   regulatory: 0.025,
-  accuracy_of_top_models: 0.10
+  accuracy_of_top_models: 0.1,
 };
 
 export const defaultQuantumSubsectorWeights = {
-  economic_resources: 0.20,
+  economic_resources: 0.2,
   human_capital: 0.15,
   global_player: 0.05,
-  policy_environment: 0.10,
+  policy_environment: 0.1,
   quantum_communications: 0.15,
   quantum_computing: 0.15,
   quantum_sensing: 0.15,
-  security: 0.05
+  security: 0.05,
 };
 
 export const defaultSemiconductorsSubsectorWeights = {
   chip_design: 0.325,
-  manufacturing: 0.10,
-  economic_resources: 0.20,
-  human_capital: 0.20,
+  manufacturing: 0.1,
+  economic_resources: 0.2,
+  human_capital: 0.2,
   equipment: 0.075,
   assembly_testing: 0.025,
   global_player: 0.025,
   raw_materials: 0.025,
-  regulatory: 0.025
+  regulatory: 0.025,
 };
 
 export const defaultBiotechSubsectorWeights = {
-  economic_resources: 0.10,
+  economic_resources: 0.1,
   security: 0.05,
   human_capital: 0.25,
   global_player: 0.025,
   regulatory: 0.025,
   agricultural_technology: 0.05,
   vaccine_research: 0.15,
-  pharmaceutical_production: 0.20,
-  genetic_engineering: 0.15
+  pharmaceutical_production: 0.2,
+  genetic_engineering: 0.15,
 };
 
 export const defaultSpaceSubsectorWeights = {
-  domestic_launch_capability: 0.10,
+  domestic_launch_capability: 0.1,
   economic_resources: 0.15,
   global_player: 0.025,
   human_capital: 0.15,
-  pnt: 0.10,
+  pnt: 0.1,
   regulatory: 0.025,
-  remote_sensing: 0.10,
-  science_exploration: 0.10,
-  telecommunications: 0.10,
-  security: 0.15
+  remote_sensing: 0.1,
+  science_exploration: 0.1,
+  telecommunications: 0.1,
+  security: 0.15,
 };
 
 export const sectorColors = {
@@ -72,7 +72,7 @@ export const sectorColors = {
   biotech: '#69B97E',
   semiconductors: '#ED8936',
   space: '#F56565',
-  quantum: '#9F7AEA'
+  quantum: '#9F7AEA',
 };
 
 export const viewBaseColors = {
@@ -81,7 +81,7 @@ export const viewBaseColors = {
   biotech: '#69B97E',
   semiconductors: '#ED8936',
   space: '#F56565',
-  quantum: '#9F7AEA'
+  quantum: '#9F7AEA',
 };
 
 export const aiSubsectorColors = {
@@ -92,7 +92,7 @@ export const aiSubsectorColors = {
   global_player: '#93C5FD',
   human_capital: '#BFDBFE',
   regulatory: '#DBEAFE',
-  accuracy_of_top_models: '#EFF6FF'
+  accuracy_of_top_models: '#EFF6FF',
 };
 
 export const quantumSubsectorColors = {
@@ -103,11 +103,11 @@ export const quantumSubsectorColors = {
   policy_environment: '#8B5CF6',
   quantum_sensing: '#A78BFA',
   quantum_communications: '#C4B5FD',
-  quantum_computing: '#EDE9FE'
+  quantum_computing: '#EDE9FE',
 };
 
 export const semiconductorsSubsectorColors = {
-  chip_design: '#7C2D12',           // Darkest - most important
+  chip_design: '#7C2D12', // Darkest - most important
   manufacturing: '#9A3412',
   economic_resources: '#B45309',
   human_capital: '#D97706',
@@ -115,19 +115,19 @@ export const semiconductorsSubsectorColors = {
   assembly_testing: '#FBBF24',
   global_player: '#FCD34D',
   raw_materials: '#FDE68A',
-  regulatory: '#FEF3C7'            // Lightest - least important
+  regulatory: '#FEF3C7', // Lightest - least important
 };
 
 export const biotechSubsectorColors = {
   agricultural_technology: '#065F46',
-  genetic_engineering:  '#10B981',
+  genetic_engineering: '#10B981',
   global_player: '#34D399',
   human_capital: '#059669',
   pharmaceutical_production: '#6EE7B7',
   regulatory: '#A7F3D0',
   economic_resources: '#99F6E4',
   security: '#047857',
-  vaccine_research: '#D1FAE5'
+  vaccine_research: '#D1FAE5',
 };
 
 export const spaceSubsectorColors = {
@@ -140,7 +140,7 @@ export const spaceSubsectorColors = {
   remote_sensing: '#FECACA',
   science_exploration: '#FEE2E2',
   telecommunications: '#FEF2F2',
-  security: '#FFF1F1'
+  security: '#FFF1F1',
 };
 
 export const sectorNames = {
@@ -148,7 +148,7 @@ export const sectorNames = {
   biotech: 'Biotechnology',
   semiconductors: 'Semiconductors',
   space: 'Space',
-  quantum: 'Quantum'
+  quantum: 'Quantum',
 };
 
 export const subsectorDefinitions = {
@@ -160,7 +160,7 @@ export const subsectorDefinitions = {
     global_player: 'Global Player',
     human_capital: 'Human Capital',
     regulatory: 'Regulatory',
-    accuracy_of_top_models: 'Accuracy of Top Models'
+    accuracy_of_top_models: 'Accuracy of Top Models',
   },
   quantum: {
     economic_resources: 'Economic Resources',
@@ -170,18 +170,18 @@ export const subsectorDefinitions = {
     policy_environment: 'Policy Environment',
     quantum_sensing: 'Quantum Sensing',
     quantum_communications: 'Quantum Communications',
-    quantum_computing: 'Quantum Computing'
+    quantum_computing: 'Quantum Computing',
   },
   semiconductors: {
     chip_design: 'Chip Design and Tools',
-    manufacturing: 'Manufacturing and Fabrication', 
+    manufacturing: 'Manufacturing and Fabrication',
     economic_resources: 'Economic Resources',
     human_capital: 'Human Capital',
     equipment: 'Equipment',
     assembly_testing: 'Assembly and Testing',
     global_player: 'Global Player',
     raw_materials: 'Specialized Materials and Wafers',
-    regulatory: 'Regulatory'
+    regulatory: 'Regulatory',
   },
   biotech: {
     agricultural_technology: 'Agricultural Technology',
@@ -192,7 +192,7 @@ export const subsectorDefinitions = {
     regulatory: 'Regulatory',
     economic_resources: 'Economic Resources',
     security: 'Security',
-    vaccine_research: 'Vaccine Research'
+    vaccine_research: 'Vaccine Research',
   },
   space: {
     domestic_launch_capability: 'Domestic Launch Capability',
@@ -204,6 +204,6 @@ export const subsectorDefinitions = {
     remote_sensing: 'Remote Sensing',
     science_exploration: 'Science and Exploration',
     telecommunications: 'Telecommunications',
-    security: 'Security'
-  }
+    security: 'Security',
+  },
 };

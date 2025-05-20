@@ -14,8 +14,8 @@ const SectorNav: React.FC<Props> = ({ currentSector, onSectorClick }) => {
           <button
             onClick={() => onSectorClick(null)}
             className={`px-8 py-3.5 rounded-xl font-medium text-sm transition-all duration-200 ${
-              !currentSector 
-                ? 'bg-[#962437] text-white shadow-lg shadow-[#962437]/20 hover:shadow-[#962437]/30' 
+              !currentSector
+                ? 'bg-[#962437] text-white shadow-lg shadow-[#962437]/20 hover:shadow-[#962437]/30'
                 : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
             }`}
           >
@@ -31,7 +31,10 @@ const SectorNav: React.FC<Props> = ({ currentSector, onSectorClick }) => {
                 style={{
                   backgroundColor: currentSector === key ? color : 'rgb(243 244 246)',
                   color: currentSector === key ? 'white' : 'rgb(75 85 99)',
-                  boxShadow: currentSector === key ? `0 10px 15px -3px ${color}20, 0 4px 6px -4px ${color}30` : 'none'
+                  boxShadow:
+                    currentSector === key
+                      ? `0 10px 15px -3px ${color}20, 0 4px 6px -4px ${color}30`
+                      : 'none',
                 }}
               >
                 {name}
