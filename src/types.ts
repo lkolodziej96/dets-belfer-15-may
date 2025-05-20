@@ -11,7 +11,6 @@ export interface SectorData {
 
 export interface CountryData {
   country: string;
-  totalScore: number;
   sectorDetails: {
     [key: string]: {
       [subsector: string]: number;
