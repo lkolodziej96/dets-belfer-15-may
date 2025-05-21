@@ -62,7 +62,7 @@ export const defaultSpaceSubsectorWeights = {
   pnt: 0.1,
   regulatory: 0.025,
   remote_sensing: 0.1,
-  science_exploration: 0.1,
+  science_and_exploration: 0.1,
   telecommunications: 0.1,
   security: 0.15,
 };
@@ -138,7 +138,7 @@ export const spaceSubsectorColors = {
   pnt: '#F87171',
   regulatory: '#FCA5A5',
   remote_sensing: '#FECACA',
-  science_exploration: '#FEE2E2',
+  science_and_exploration: '#FEE2E2',
   telecommunications: '#FEF2F2',
   security: '#FFF1F1',
 };
@@ -202,7 +202,7 @@ export const subsectorDefinitions = {
     pnt: 'Position, Navigation, and Timing',
     regulatory: 'Regulatory',
     remote_sensing: 'Remote Sensing',
-    science_exploration: 'Science and Exploration',
+    science_and_exploration: 'Science and Exploration',
     telecommunications: 'Telecommunications',
     security: 'Security',
   },

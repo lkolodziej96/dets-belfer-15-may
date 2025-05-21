@@ -109,7 +109,7 @@ function App() {
     { key: 'global_player', name: 'Global Player' },
     { key: 'regulatory', name: 'Regulatory' },
     { key: 'domestic_launch_capability', name: 'Domestic Launch Capability' },
-    { key: 'science_exploration', name: 'Science and Exploration' },
+    { key: 'science_and_exploration', name: 'Science and Exploration' },
     { key: 'pnt', name: 'Position, Navigation, and Timing' },
     { key: 'telecommunications', name: 'Telecommunications' },
     { key: 'remote_sensing', name: 'Remote Sensing' },

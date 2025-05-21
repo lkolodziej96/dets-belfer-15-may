@@ -1,8 +1,16 @@
 import type { CountryData } from '../types';
 import data from './data.xlsx?embed';
 
+function renameSheetName(sheetName: string) {
+  if (/semicon/i.test(sheetName)) {
+    return 'semiconductors';
+  }
+
+  return sheetName;
+}
+
 const flatListWithSector = data.flatMap(({ sheetName, data }) => {
-  return data.map((dataEntry) => ({ sector: sheetName, ...dataEntry }));
+  return data.map((dataEntry) => ({ sector: renameSheetName(sheetName), ...dataEntry }));
 });
 
 const groupedByCountry = Object.groupBy(
@@ -34,7 +42,9 @@ const processedData = Object.entries(groupedByCountry).map(([country, data]) => 
             // removes grouped attributes
             .filter(
               ({ attributeName }) =>
-                !['country', 'sector', 'raw_index_score'].includes(attributeName.toLowerCase()),
+                !['country', 'sector', 'raw_index_score', 'raw_score'].includes(
+                  attributeName.toLowerCase(),
+                ),
             );
 
           return Object.fromEntries(
