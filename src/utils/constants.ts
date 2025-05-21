@@ -31,14 +31,14 @@ export const defaultQuantumSubsectorWeights = {
 };
 
 export const defaultSemiconductorsSubsectorWeights = {
-  chip_design: 0.325,
+  chip_design_and_tools: 0.325,
   manufacturing: 0.1,
   economic_resources: 0.2,
   human_capital: 0.2,
   equipment: 0.075,
-  assembly_testing: 0.025,
+  'assembly_and_testing_(osat)': 0.025,
   global_player: 0.025,
-  raw_materials: 0.025,
+  raw_materials_and_wafers: 0.025,
   regulatory: 0.025,
 };
 
@@ -107,14 +107,14 @@ export const quantumSubsectorColors = {
 };
 
 export const semiconductorsSubsectorColors = {
-  chip_design: '#7C2D12', // Darkest - most important
+  chip_design_and_tools: '#7C2D12', // Darkest - most important
   manufacturing: '#9A3412',
   economic_resources: '#B45309',
   human_capital: '#D97706',
   equipment: '#F59E0B',
-  assembly_testing: '#FBBF24',
+  'assembly_and_testing_(osat)': '#FBBF24',
   global_player: '#FCD34D',
-  raw_materials: '#FDE68A',
+  raw_materials_and_wafers: '#FDE68A',
   regulatory: '#FEF3C7', // Lightest - least important
 };
 
@@ -173,14 +173,14 @@ export const subsectorDefinitions = {
     quantum_computing: 'Quantum Computing',
   },
   semiconductors: {
-    chip_design: 'Chip Design and Tools',
+    chip_design_and_tools: 'Chip Design and Tools',
     manufacturing: 'Manufacturing and Fabrication',
     economic_resources: 'Economic Resources',
     human_capital: 'Human Capital',
     equipment: 'Equipment',
-    assembly_testing: 'Assembly and Testing',
+    'assembly_and_testing_(osat)': 'Assembly and Testing',
     global_player: 'Global Player',
-    raw_materials: 'Specialized Materials and Wafers',
+    raw_materials_and_wafers: 'Specialized Materials and Wafers',
     regulatory: 'Regulatory',
   },
   biotech: {

@@ -83,11 +83,11 @@ function App() {
     { key: 'human_capital', name: 'Human Capital' },
     { key: 'global_player', name: 'Global Player' },
     { key: 'regulatory', name: 'Regulatory' },
-    { key: 'raw_materials', name: 'Specialized Material and Wafers' },
-    { key: 'chip_design', name: 'Chip Design and Tools' },
+    { key: 'raw_materials_and_wafers', name: 'Specialized Material and Wafers' },
+    { key: 'chip_design_and_tools', name: 'Chip Design and Tools' },
     { key: 'manufacturing', name: 'Manufacturing and Fabrication' },
     { key: 'equipment', name: 'Equipment' },
-    { key: 'assembly_testing', name: 'Assembly and Testing' },
+    { key: 'assembly_and_testing_(osat)', name: 'Assembly and Testing' },
   ];
 
   const biotechColumns = [
