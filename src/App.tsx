@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import WorldMap from './components/WorldMap';
 import BarChart from './components/BarChart';
 import PieChart from './components/PieChart';
@@ -13,7 +13,15 @@ import {
   defaultBiotechSubsectorWeights,
   defaultSpaceSubsectorWeights,
 } from './utils/constants';
-import { mainData } from './data/mainData';
+import {
+  mainData,
+  overviewColumns,
+  aiColumns,
+  quantumColumns,
+  semiconductorsColumns,
+  biotechColumns,
+  spaceColumns,
+} from './data/mainData';
 import type { CountryData, SectorWeights as SectorWeightsType, ViewState } from './types';
 
 function App() {
@@ -35,85 +43,7 @@ function App() {
   );
   const [selectedSector, setSelectedSector] = useState<string | null>(null);
   const [selectedCountries, setSelectedCountries] = useState<string[]>([]);
-  const [viewState, setViewState] = useState<ViewState>({ type: 'main' });
-
-  // Debug log for Singapore selection
-  useEffect(() => {
-    if (selectedCountries.includes('Singapore')) {
-      console.log('Singapore selected in App.tsx');
-      console.log(
-        'Current data:',
-        data.find((d) => d.country === 'Singapore'),
-      );
-    }
-  }, [selectedCountries, data]);
-
-  const overviewColumns = [
-    { key: 'ai', name: 'AI' },
-    { key: 'quantum', name: 'Quantum' },
-    { key: 'semiconductors', name: 'Semiconductors' },
-    { key: 'biotech', name: 'Biotechnology' },
-    { key: 'space', name: 'Space' },
-  ];
-
-  const aiColumns = [
-    { key: 'algorithms', name: 'Algorithms' },
-    { key: 'computing_power', name: 'Computing Power' },
-    { key: 'data', name: 'Data' },
-    { key: 'economic_resources', name: 'Economic Resources' },
-    { key: 'global_player', name: 'Global Player' },
-    { key: 'human_capital', name: 'Human Capital' },
-    { key: 'regulatory', name: 'Regulatory' },
-    { key: 'accuracy_of_top_models', name: 'Accuracy of Top Models' },
-  ];
-
-  const quantumColumns = [
-    { key: 'economic_resources', name: 'Economic Resources' },
-    { key: 'security', name: 'Security' },
-    { key: 'human_capital', name: 'Human Capital' },
-    { key: 'global_player', name: 'Global Player' },
-    { key: 'policy_environment', name: 'Policy Environment' },
-    { key: 'quantum_sensing', name: 'Quantum Sensing' },
-    { key: 'quantum_communications', name: 'Quantum Communications' },
-    { key: 'quantum_computing', name: 'Quantum Computing' },
-  ];
-
-  const semiconductorsColumns = [
-    { key: 'economic_resources', name: 'Economic Resources' },
-    { key: 'human_capital', name: 'Human Capital' },
-    { key: 'global_player', name: 'Global Player' },
-    { key: 'regulatory', name: 'Regulatory' },
-    { key: 'raw_materials_and_wafers', name: 'Specialized Material and Wafers' },
-    { key: 'chip_design_and_tools', name: 'Chip Design and Tools' },
-    { key: 'manufacturing', name: 'Manufacturing and Fabrication' },
-    { key: 'equipment', name: 'Equipment' },
-    { key: 'assembly_and_testing_(osat)', name: 'Assembly and Testing' },
-  ];
-
-  const biotechColumns = [
-    { key: 'economic_resources', name: 'Economic Resources' },
-    { key: 'security', name: 'Security' },
-    { key: 'human_capital', name: 'Human Capital' },
-    { key: 'global_player', name: 'Global Player' },
-    { key: 'regulatory', name: 'Regulatory' },
-    { key: 'agricultural_technology', name: 'Agricultural Technology' },
-    { key: 'vaccine_research', name: 'Vaccine Research' },
-    { key: 'pharmaceutical_production', name: 'Pharmaceutical Production' },
-    { key: 'genetic_engineering', name: 'Genetic Engineering' },
-  ];
-
-  const spaceColumns = [
-    { key: 'economic_resources', name: 'Economic Resources' },
-    { key: 'human_capital', name: 'Human Capital' },
-    { key: 'security', name: 'Security' },
-    { key: 'global_player', name: 'Global Player' },
-    { key: 'regulatory', name: 'Regulatory' },
-    { key: 'domestic_launch_capability', name: 'Domestic Launch Capability' },
-    { key: 'science_and_exploration', name: 'Science and Exploration' },
-    { key: 'pnt', name: 'Position, Navigation, and Timing' },
-    { key: 'telecommunications', name: 'Telecommunications' },
-    { key: 'remote_sensing', name: 'Remote Sensing' },
-  ];
+  const [viewState, setViewState] = useState<ViewState>({ type: 'main', sector: null });
 
   const handleSort = (key: string) => {
     console.log('Sorting by:', key);
@@ -287,6 +217,7 @@ function App() {
   ]);
 
   const handleSectorWeightChange = (sector: string, value: number) => {
+    console.log({ sector, value });
     if (viewState.type === 'sector') {
       if (viewState.sector === 'ai') {
         setAISubsectorWeights((prev) => ({
@@ -402,7 +333,7 @@ function App() {
             <div className="bg-white rounded-xl shadow-lg p-6 sticky top-8 border border-gray-100">
               <h2 className="text-xl font-semibold mb-6 text-gray-800">
                 {viewState.type === 'sector'
-                  ? `${formatSectorLabel(viewState.sector)} Pillar Weights`
+                  ? `${formatSectorLabel(viewState.sector ?? undefined)} Pillar Weights`
                   : 'Sector Weights'}
               </h2>
               <SectorWeights

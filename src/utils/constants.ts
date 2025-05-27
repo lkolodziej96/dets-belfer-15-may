@@ -1,4 +1,4 @@
-import type { SectorWeights } from '../types';
+// TODO: REMOVE THIS FILE
 
 export const defaultSectorWeights = {
   ai: 0.25,

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import type { CountryData, ViewState } from '../types';
 import { calculateColorIntensity } from '../utils/dataProcessing';
-import { sectorColors, viewBaseColors, subsectorDefinitions } from '../utils/constants';
+import { viewBaseColors } from '../utils/constants';
 
 interface Column {
   key: string;

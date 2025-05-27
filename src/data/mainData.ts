@@ -60,3 +60,71 @@ const processedData = Object.entries(groupedByCountry).map(([country, data]) => 
 });
 
 export const mainData = processedData as unknown as CountryData[];
+
+// TODO: Moved to `src/modules/sectors.ts`
+export const overviewColumns = [
+  { key: 'ai', name: 'AI' },
+  { key: 'quantum', name: 'Quantum' },
+  { key: 'semiconductors', name: 'Semiconductors' },
+  { key: 'biotech', name: 'Biotechnology' },
+  { key: 'space', name: 'Space' },
+];
+
+export const aiColumns = [
+  { key: 'algorithms', name: 'Algorithms' },
+  { key: 'computing_power', name: 'Computing Power' },
+  { key: 'data', name: 'Data' },
+  { key: 'economic_resources', name: 'Economic Resources' },
+  { key: 'global_player', name: 'Global Player' },
+  { key: 'human_capital', name: 'Human Capital' },
+  { key: 'regulatory', name: 'Regulatory' },
+  { key: 'accuracy_of_top_models', name: 'Accuracy of Top Models' },
+];
+
+export const quantumColumns = [
+  { key: 'economic_resources', name: 'Economic Resources' },
+  { key: 'security', name: 'Security' },
+  { key: 'human_capital', name: 'Human Capital' },
+  { key: 'global_player', name: 'Global Player' },
+  { key: 'policy_environment', name: 'Policy Environment' },
+  { key: 'quantum_sensing', name: 'Quantum Sensing' },
+  { key: 'quantum_communications', name: 'Quantum Communications' },
+  { key: 'quantum_computing', name: 'Quantum Computing' },
+];
+
+export const semiconductorsColumns = [
+  { key: 'economic_resources', name: 'Economic Resources' },
+  { key: 'human_capital', name: 'Human Capital' },
+  { key: 'global_player', name: 'Global Player' },
+  { key: 'regulatory', name: 'Regulatory' },
+  { key: 'raw_materials_and_wafers', name: 'Specialized Material and Wafers' },
+  { key: 'chip_design_and_tools', name: 'Chip Design and Tools' },
+  { key: 'manufacturing', name: 'Manufacturing and Fabrication' },
+  { key: 'equipment', name: 'Equipment' },
+  { key: 'assembly_and_testing_(osat)', name: 'Assembly and Testing' },
+];
+
+export const biotechColumns = [
+  { key: 'economic_resources', name: 'Economic Resources' },
+  { key: 'security', name: 'Security' },
+  { key: 'human_capital', name: 'Human Capital' },
+  { key: 'global_player', name: 'Global Player' },
+  { key: 'regulatory', name: 'Regulatory' },
+  { key: 'agricultural_technology', name: 'Agricultural Technology' },
+  { key: 'vaccine_research', name: 'Vaccine Research' },
+  { key: 'pharmaceutical_production', name: 'Pharmaceutical Production' },
+  { key: 'genetic_engineering', name: 'Genetic Engineering' },
+];
+
+export const spaceColumns = [
+  { key: 'economic_resources', name: 'Economic Resources' },
+  { key: 'human_capital', name: 'Human Capital' },
+  { key: 'security', name: 'Security' },
+  { key: 'global_player', name: 'Global Player' },
+  { key: 'regulatory', name: 'Regulatory' },
+  { key: 'domestic_launch_capability', name: 'Domestic Launch Capability' },
+  { key: 'science_and_exploration', name: 'Science and Exploration' },
+  { key: 'pnt', name: 'Position, Navigation, and Timing' },
+  { key: 'telecommunications', name: 'Telecommunications' },
+  { key: 'remote_sensing', name: 'Remote Sensing' },
+];

@@ -1,3 +1,4 @@
+import path from 'node:path';
 import { defineConfig, type Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
 import xlsx from 'xlsx';
@@ -46,6 +47,11 @@ export default defineConfig({
       modernPolyfills: ['es.object.group-by'],
     }),
   ],
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, './src'),
+    },
+  },
   optimizeDeps: {
     exclude: ['lucide-react'],
   },
