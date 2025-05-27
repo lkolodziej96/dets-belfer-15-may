@@ -438,18 +438,6 @@ function App() {
 
           {/* Main Content Area */}
           <div className="w-[760px] space-y-8">
-            {/* World Map */}
-            <div className="bg-white rounded-xl shadow-lg p-8 border border-gray-100">
-              <WorldMap
-                data={data}
-                selectedSector={selectedSector}
-                selectedCountries={selectedCountries}
-                onCountrySelect={handleCountrySelect}
-                viewState={viewState}
-                sectorWeights={sectorWeights}
-              />
-            </div>
-
             {/* Charts Section */}
             <div className="grid grid-cols-5 gap-8">
               {/* Bar Chart (3 columns) */}
@@ -477,6 +465,18 @@ function App() {
                   />
                 </div>
               </div>
+            </div>
+
+            {/* World Map */}
+            <div className="bg-white rounded-xl shadow-lg p-8 border border-gray-100">
+              <WorldMap
+                data={data}
+                selectedSector={selectedSector}
+                selectedCountries={selectedCountries}
+                onCountrySelect={handleCountrySelect}
+                viewState={viewState}
+                sectorWeights={sectorWeights}
+              />
             </div>
 
             {/* Data Table */}
