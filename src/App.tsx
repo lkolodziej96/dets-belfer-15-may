@@ -1,433 +1,135 @@
-import React, { useState, useEffect } from 'react';
-import WorldMap from './components/WorldMap';
-import BarChart from './components/BarChart';
-import PieChart from './components/PieChart';
-import DataTable from './components/DataTable';
-import SectorWeights from './components/SectorWeights';
-import SectorNav from './components/SectorNav';
+import { useState, useCallback } from 'react';
+
+import { useImmer } from 'use-immer';
+
+import BarChart from '@/components/BarChart';
+import DataTable from '@/components/DataTable';
+import PieChart from '@/components/PieChart';
+import SectorNav from '@/components/SectorNav';
+import { WeigthsTweaker } from '@/components/WeigthsTweaker';
+import WorldMap from '@/components/WorldMap';
+import type { Weights } from '@/data/types';
+import { useDataPipeline } from '@/data/useDataPieline';
+import { getSectorColor } from '@/sectors/colors';
+import { getSectorWeights } from '@/sectors/defaults';
+import { getSectorLabel } from '@/sectors/labels';
+import type { Sector } from '@/sectors/sectorDef';
 import {
-  defaultSectorWeights,
-  defaultAISubsectorWeights,
-  defaultQuantumSubsectorWeights,
-  defaultSemiconductorsSubsectorWeights,
-  defaultBiotechSubsectorWeights,
-  defaultSpaceSubsectorWeights,
-} from './utils/constants';
-import { mainData } from './data/mainData';
-import type { CountryData, SectorWeights as SectorWeightsType, ViewState } from './types';
+  getAISectorWeights,
+  getBiotechSectorWeights,
+  getQuantumSectorWeights,
+  getSemiconductorsSectorWeights,
+  getSpaceSectorWeights,
+} from '@/subsectors/defaults';
+import { getSubsectorLabel } from '@/subsectors/labels';
+import { theme } from '@/theme';
 
-function App() {
-  const [data, setData] = useState<CountryData[]>(mainData);
-  const [sectorWeights, setSectorWeights] = useState<SectorWeightsType>(defaultSectorWeights);
-  const [aiSubsectorWeights, setAISubsectorWeights] =
-    useState<Record<string, number>>(defaultAISubsectorWeights);
-  const [quantumSubsectorWeights, setQuantumSubsectorWeights] = useState<Record<string, number>>(
-    defaultQuantumSubsectorWeights,
-  );
-  const [semiconductorsSubsectorWeights, setSemiconductorsSubsectorWeights] = useState<
-    Record<string, number>
-  >(defaultSemiconductorsSubsectorWeights);
-  const [biotechSubsectorWeights, setBiotechSubsectorWeights] = useState<Record<string, number>>(
-    defaultBiotechSubsectorWeights,
-  );
-  const [spaceSubsectorWeights, setSpaceSubsectorWeights] = useState<Record<string, number>>(
-    defaultSpaceSubsectorWeights,
-  );
-  const [selectedSector, setSelectedSector] = useState<string | null>(null);
+function getDefaultWeights(): Weights {
+  return {
+    overall: getSectorWeights(),
+    ai: getAISectorWeights(),
+    biotech: getBiotechSectorWeights(),
+    quantum: getQuantumSectorWeights(),
+    semiconductors: getSemiconductorsSectorWeights(),
+    space: getSpaceSectorWeights(),
+  };
+}
+
+function formatSectorLabel(sector: Sector | null) {
+  if (!sector) return 'Sector';
+
+  const acronymOverrides: Record<string, string> = {
+    ai: 'AI',
+  };
+
+  const lower = sector.toLowerCase();
+  return acronymOverrides[lower] || lower.charAt(0).toUpperCase() + lower.slice(1);
+}
+
+export default function App() {
+  const [selectedSector, setSelectedSector] = useState<Sector | null>(null);
+  const [selectedSubsector, setSelectedSubsector] = useState<string | null>(null);
   const [selectedCountries, setSelectedCountries] = useState<string[]>([]);
-  const [viewState, setViewState] = useState<ViewState>({ type: 'main' });
 
-  // Debug log for Singapore selection
-  useEffect(() => {
-    if (selectedCountries.includes('Singapore')) {
-      console.log('Singapore selected in App.tsx');
-      console.log(
-        'Current data:',
-        data.find((d) => d.country === 'Singapore'),
-      );
-    }
-  }, [selectedCountries, data]);
+  const [weights, setWeights] = useImmer<Weights>(getDefaultWeights);
+  const aggregatedData = useDataPipeline({ weights, selectedSector });
 
-  const overviewColumns = [
-    { key: 'ai', name: 'AI' },
-    { key: 'quantum', name: 'Quantum' },
-    { key: 'semiconductors', name: 'Semiconductors' },
-    { key: 'biotech', name: 'Biotechnology' },
-    { key: 'space', name: 'Space' },
-  ];
-
-  const aiColumns = [
-    { key: 'algorithms', name: 'Algorithms' },
-    { key: 'computing_power', name: 'Computing Power' },
-    { key: 'data', name: 'Data' },
-    { key: 'economic_resources', name: 'Economic Resources' },
-    { key: 'global_player', name: 'Global Player' },
-    { key: 'human_capital', name: 'Human Capital' },
-    { key: 'regulatory', name: 'Regulatory' },
-    { key: 'accuracy_of_top_models', name: 'Accuracy of Top Models' },
-  ];
-
-  const quantumColumns = [
-    { key: 'economic_resources', name: 'Economic Resources' },
-    { key: 'security', name: 'Security' },
-    { key: 'human_capital', name: 'Human Capital' },
-    { key: 'global_player', name: 'Global Player' },
-    { key: 'policy_environment', name: 'Policy Environment' },
-    { key: 'quantum_sensing', name: 'Quantum Sensing' },
-    { key: 'quantum_communications', name: 'Quantum Communications' },
-    { key: 'quantum_computing', name: 'Quantum Computing' },
-  ];
-
-  const semiconductorsColumns = [
-    { key: 'economic_resources', name: 'Economic Resources' },
-    { key: 'human_capital', name: 'Human Capital' },
-    { key: 'global_player', name: 'Global Player' },
-    { key: 'regulatory', name: 'Regulatory' },
-    { key: 'raw_materials_and_wafers', name: 'Specialized Material and Wafers' },
-    { key: 'chip_design_and_tools', name: 'Chip Design and Tools' },
-    { key: 'manufacturing', name: 'Manufacturing and Fabrication' },
-    { key: 'equipment', name: 'Equipment' },
-    { key: 'assembly_and_testing_(osat)', name: 'Assembly and Testing' },
-  ];
-
-  const biotechColumns = [
-    { key: 'economic_resources', name: 'Economic Resources' },
-    { key: 'security', name: 'Security' },
-    { key: 'human_capital', name: 'Human Capital' },
-    { key: 'global_player', name: 'Global Player' },
-    { key: 'regulatory', name: 'Regulatory' },
-    { key: 'agricultural_technology', name: 'Agricultural Technology' },
-    { key: 'vaccine_research', name: 'Vaccine Research' },
-    { key: 'pharmaceutical_production', name: 'Pharmaceutical Production' },
-    { key: 'genetic_engineering', name: 'Genetic Engineering' },
-  ];
-
-  const spaceColumns = [
-    { key: 'economic_resources', name: 'Economic Resources' },
-    { key: 'human_capital', name: 'Human Capital' },
-    { key: 'security', name: 'Security' },
-    { key: 'global_player', name: 'Global Player' },
-    { key: 'regulatory', name: 'Regulatory' },
-    { key: 'domestic_launch_capability', name: 'Domestic Launch Capability' },
-    { key: 'science_and_exploration', name: 'Science and Exploration' },
-    { key: 'pnt', name: 'Position, Navigation, and Timing' },
-    { key: 'telecommunications', name: 'Telecommunications' },
-    { key: 'remote_sensing', name: 'Remote Sensing' },
-  ];
-
-  const handleSort = (key: string) => {
-    console.log('Sorting by:', key);
-  };
-
-  const calculateSectorScore = (
-    subsectorData: Record<string, number>,
-    weights: Record<string, number>,
-  ): number => {
-    return Object.entries(subsectorData).reduce((total, [key, value]) => {
-      return total + value * (weights[key] ?? 0);
-    }, 0);
-  };
-
-  useEffect(() => {
-    const updatedData = mainData.map((country) => {
-      if (viewState.type === 'sector') {
-        const sectorDetails = country.sectorDetails ?? {};
-
-        if (viewState.sector === 'ai' && sectorDetails.ai) {
-          const aiSubsectorScores = Object.entries(sectorDetails.ai).reduce(
-            (acc, [key, value]) => {
-              acc[key] = (value ?? 0) * (aiSubsectorWeights[key] ?? 0);
-              return acc;
-            },
-            {} as Record<string, number>,
-          );
-
-          const aiTotalScore = Object.values(aiSubsectorScores).reduce(
-            (sum, score) => sum + score,
-            0,
-          );
-
-          return {
-            ...country,
-            sectorDetails: {
-              ...sectorDetails,
-              ai: aiSubsectorScores,
-            },
-            totalScore: aiTotalScore,
-          };
-        } else if (viewState.sector === 'quantum' && sectorDetails.quantum) {
-          const quantumSubsectorScores = Object.entries(sectorDetails.quantum).reduce(
-            (acc, [key, value]) => {
-              acc[key] = (value ?? 0) * (quantumSubsectorWeights[key] ?? 0);
-              return acc;
-            },
-            {} as Record<string, number>,
-          );
-
-          const quantumTotalScore = Object.values(quantumSubsectorScores).reduce(
-            (sum, score) => sum + score,
-            0,
-          );
-
-          return {
-            ...country,
-            sectorDetails: {
-              ...sectorDetails,
-              quantum: quantumSubsectorScores,
-            },
-            totalScore: quantumTotalScore,
-          };
-        } else if (viewState.sector === 'semiconductors' && sectorDetails.semiconductors) {
-          const semiconductorsSubsectorScores = Object.entries(sectorDetails.semiconductors).reduce(
-            (acc, [key, value]) => {
-              acc[key] = (value ?? 0) * (semiconductorsSubsectorWeights[key] ?? 0);
-              return acc;
-            },
-            {} as Record<string, number>,
-          );
-
-          const semiconductorsTotalScore = Object.values(semiconductorsSubsectorScores).reduce(
-            (sum, score) => sum + score,
-            0,
-          );
-
-          return {
-            ...country,
-            sectorDetails: {
-              ...sectorDetails,
-              semiconductors: semiconductorsSubsectorScores,
-            },
-            totalScore: semiconductorsTotalScore,
-          };
-        } else if (viewState.sector === 'biotech' && sectorDetails.biotech) {
-          const biotechSubsectorScores = Object.entries(sectorDetails.biotech).reduce(
-            (acc, [key, value]) => {
-              acc[key] = (value ?? 0) * (biotechSubsectorWeights[key] ?? 0);
-              return acc;
-            },
-            {} as Record<string, number>,
-          );
-
-          const biotechTotalScore = Object.values(biotechSubsectorScores).reduce(
-            (sum, score) => sum + score,
-            0,
-          );
-
-          return {
-            ...country,
-            sectorDetails: {
-              ...sectorDetails,
-              biotech: biotechSubsectorScores,
-            },
-            totalScore: biotechTotalScore,
-          };
-        } else if (viewState.sector === 'space' && sectorDetails.space) {
-          const spaceSubsectorScores = Object.entries(sectorDetails.space).reduce(
-            (acc, [key, value]) => {
-              acc[key] = (value ?? 0) * (spaceSubsectorWeights[key] ?? 0);
-              return acc;
-            },
-            {} as Record<string, number>,
-          );
-
-          const spaceTotalScore = Object.values(spaceSubsectorScores).reduce(
-            (sum, score) => sum + score,
-            0,
-          );
-
-          return {
-            ...country,
-            sectorDetails: {
-              ...sectorDetails,
-              space: spaceSubsectorScores,
-            },
-            totalScore: spaceTotalScore,
-          };
-        }
-      }
-
-      // Calculate weighted sector scores based on subsector weights
-      const weightedSectorScores = {
-        ai:
-          calculateSectorScore(country.sectorDetails?.ai ?? {}, aiSubsectorWeights) *
-          sectorWeights.ai,
-        quantum:
-          calculateSectorScore(country.sectorDetails?.quantum ?? {}, quantumSubsectorWeights) *
-          sectorWeights.quantum,
-        semiconductors:
-          calculateSectorScore(
-            country.sectorDetails?.semiconductors ?? {},
-            semiconductorsSubsectorWeights,
-          ) * sectorWeights.semiconductors,
-        biotech:
-          calculateSectorScore(country.sectorDetails?.biotech ?? {}, biotechSubsectorWeights) *
-          sectorWeights.biotech,
-        space:
-          calculateSectorScore(country.sectorDetails?.space ?? {}, spaceSubsectorWeights) *
-          sectorWeights.space,
-      };
-
-      const totalScore = Object.values(weightedSectorScores).reduce((sum, score) => sum + score, 0);
-
-      return {
-        ...country,
-        totalScore,
-      };
-    });
-
-    setData(updatedData);
-  }, [
-    sectorWeights,
-    aiSubsectorWeights,
-    quantumSubsectorWeights,
-    semiconductorsSubsectorWeights,
-    biotechSubsectorWeights,
-    spaceSubsectorWeights,
-    viewState,
-  ]);
-
-  const handleSectorWeightChange = (sector: string, value: number) => {
-    if (viewState.type === 'sector') {
-      if (viewState.sector === 'ai') {
-        setAISubsectorWeights((prev) => ({
-          ...prev,
-          [sector]: value,
-        }));
-      } else if (viewState.sector === 'quantum') {
-        setQuantumSubsectorWeights((prev) => ({
-          ...prev,
-          [sector]: value,
-        }));
-      } else if (viewState.sector === 'semiconductors') {
-        setSemiconductorsSubsectorWeights((prev) => ({
-          ...prev,
-          [sector]: value,
-        }));
-      } else if (viewState.sector === 'biotech') {
-        setBiotechSubsectorWeights((prev) => ({
-          ...prev,
-          [sector]: value,
-        }));
-      } else if (viewState.sector === 'space') {
-        setSpaceSubsectorWeights((prev) => ({
-          ...prev,
-          [sector]: value,
-        }));
-      }
-    } else {
-      setSectorWeights((prev) => ({
-        ...prev,
-        [sector]: value,
-      }));
-    }
-  };
-
-  const handleSectorSelect = (sector: string | null) => {
-    setSelectedSector(sector);
-  };
-
-  const handleCountrySelect = (countries: string[]) => {
+  const handleCountrySelect = useCallback((countries: string[]) => {
     setSelectedCountries(countries);
-  };
+  }, []);
 
-  const handleSectorNavClick = (sector: string | null) => {
-    setViewState({ type: sector ? 'sector' : 'main', sector });
-    setSelectedSector(null);
+  const handleSectorNavClick = useCallback((sector: Sector | null) => {
+    setSelectedSector(sector);
     setSelectedCountries([]);
-  };
+    setSelectedSubsector(null);
+  }, []);
 
-  const handleReset = () => {
-    setSelectedSector(null);
+  const handleReset = useCallback(() => {
+    const defaultWeights = getDefaultWeights();
+    setSelectedSubsector(null);
     setSelectedCountries([]);
-    setSectorWeights(defaultSectorWeights);
-    setAISubsectorWeights(defaultAISubsectorWeights);
-    setQuantumSubsectorWeights(defaultQuantumSubsectorWeights);
-    setSemiconductorsSubsectorWeights(defaultSemiconductorsSubsectorWeights);
-    setBiotechSubsectorWeights(defaultBiotechSubsectorWeights);
-    setSpaceSubsectorWeights(defaultSpaceSubsectorWeights);
-  };
-
-  const getActiveColumns = () => {
-    if (viewState.type === 'sector') {
-      switch (viewState.sector) {
-        case 'ai':
-          return aiColumns;
-        case 'quantum':
-          return quantumColumns;
-        case 'semiconductors':
-          return semiconductorsColumns;
-        case 'biotech':
-          return biotechColumns;
-        case 'space':
-          return spaceColumns;
-        default:
-          return overviewColumns;
+    setWeights((draft) => {
+      if (selectedSector) {
+        // Following assumption is correct `as never` is needed to avoid type errors
+        draft[selectedSector] = defaultWeights[selectedSector] as never;
+      } else {
+        draft.overall = defaultWeights.overall;
       }
-    }
-    return overviewColumns;
-  };
-
-  const formatSectorLabel = (sector: string | undefined) => {
-    if (!sector) return 'Sector';
-
-    const acronymOverrides: Record<string, string> = {
-      ai: 'AI',
-    };
-
-    const lower = sector.toLowerCase();
-    return acronymOverrides[lower] || lower.charAt(0).toUpperCase() + lower.slice(1);
-  };
+    });
+  }, [setWeights, selectedSector]);
 
   return (
-    <div className="w-[1200px] mx-auto bg-gray-50">
+    <div className="mx-auto w-[1200px] bg-gray-50">
       {/* Header */}
-      <div className="bg-white shadow-lg border-b border-gray-100">
+      <div className="border-b border-gray-100 bg-white shadow-lg">
         <div className="px-8 py-4">
           <div className="text-center">
-            <div className="inline-block bg-white rounded-2xl shadow-xl px-8 py-4 border border-gray-100">
-              <h1 className="text-4xl font-bold bg-gradient-to-r from-[#962437] to-[#d4526d] bg-clip-text text-transparent">
+            <div className="inline-block rounded-2xl border border-gray-100 bg-white px-8 py-4 shadow-xl">
+              <h1 className="bg-gradient-to-r from-[#962437] to-[#d4526d] bg-clip-text text-4xl font-bold text-transparent">
                 Critical and Emerging Technologies Dashboard
               </h1>
             </div>
           </div>
         </div>
       </div>
-
-      <SectorNav currentSector={viewState.sector} onSectorClick={handleSectorNavClick} />
+      <SectorNav currentSector={selectedSector} onSectorChange={handleSectorNavClick} />
 
       <div className="px-8 py-8">
         <div className="flex gap-8">
           {/* Left Panel - Sector Weights */}
           <div className="w-60 flex-shrink-0">
-            <div className="bg-white rounded-xl shadow-lg p-6 sticky top-8 border border-gray-100">
-              <h2 className="text-xl font-semibold mb-6 text-gray-800">
-                {viewState.type === 'sector'
-                  ? `${formatSectorLabel(viewState.sector)} Pillar Weights`
+            <div className="sticky top-8 rounded-xl border border-gray-100 bg-white p-6 shadow-lg">
+              <h2 className="mb-6 text-xl font-semibold text-gray-800">
+                {selectedSector
+                  ? `${formatSectorLabel(selectedSector)} Pillar Weights`
                   : 'Sector Weights'}
               </h2>
-              <SectorWeights
-                weights={
-                  viewState.type === 'sector'
-                    ? viewState.sector === 'ai'
-                      ? aiSubsectorWeights
-                      : viewState.sector === 'quantum'
-                        ? quantumSubsectorWeights
-                        : viewState.sector === 'semiconductors'
-                          ? semiconductorsSubsectorWeights
-                          : viewState.sector === 'biotech'
-                            ? biotechSubsectorWeights
-                            : viewState.sector === 'space'
-                              ? spaceSubsectorWeights
-                              : sectorWeights
-                    : sectorWeights
+              <WeigthsTweaker
+                accentColor={selectedSector ? getSectorColor(selectedSector) : theme.colors.main}
+                weights={selectedSector ? weights[selectedSector] : weights.overall}
+                getLabel={(key) => {
+                  if (selectedSector) {
+                    return getSubsectorLabel(selectedSector, key);
+                  }
+                  return getSectorLabel(key as Sector);
+                }}
+                onChangeWeight={(sector, value) =>
+                  setWeights((draft) => {
+                    if (selectedSector) {
+                      draft[selectedSector][
+                        sector as keyof (typeof weights)[typeof selectedSector]
+                      ] = value;
+                    } else {
+                      draft.overall[sector as Sector] = value;
+                    }
+                  })
                 }
-                onChange={handleSectorWeightChange}
-                viewState={viewState}
               />
-              <div className="mt-6 pt-6 border-t border-gray-100">
+
+              <div className="mt-6 border-t border-gray-100 pt-6">
                 <button
                   onClick={handleReset}
-                  className="w-full px-6 py-2.5 bg-gray-100 hover:bg-gray-200 rounded-lg text-gray-700 transition-colors font-medium"
+                  className="w-full rounded-lg bg-gray-100 px-6 py-2.5 font-medium text-gray-700 transition-colors hover:bg-gray-200"
                 >
                   Reset Selection
                 </button>
@@ -438,61 +140,50 @@ function App() {
           {/* Main Content Area */}
           <div className="w-[760px] space-y-8">
             {/* Bar Chart */}
-            <div className="bg-white rounded-xl shadow-lg p-8 border border-gray-100">
+            <div className="rounded-xl border border-gray-100 bg-white p-8 shadow-lg">
               <BarChart
-                data={data}
                 selectedSector={selectedSector}
                 selectedCountries={selectedCountries}
                 onCountrySelect={handleCountrySelect}
-                viewState={viewState}
-                sectorWeights={sectorWeights}
+                aggregatedData={aggregatedData}
+                selectedSubsector={selectedSubsector}
               />
             </div>
 
             {/* World Map and Pie Chart */}
             <div className="grid grid-cols-5 gap-8">
               {/* World Map (3 columns) */}
-              <div className="col-span-3 bg-white rounded-xl shadow-lg p-8 border border-gray-100">
+              <div className="col-span-3 rounded-xl border border-gray-100 bg-white p-8 shadow-lg">
                 <WorldMap
-                  data={data}
                   selectedSector={selectedSector}
                   selectedCountries={selectedCountries}
                   onCountrySelect={handleCountrySelect}
-                  viewState={viewState}
-                  sectorWeights={sectorWeights}
+                  aggregatedData={aggregatedData}
+                  selectedSubsector={selectedSubsector}
                 />
               </div>
 
               {/* Pie Chart (2 columns) */}
-              <div className="col-span-2 bg-white rounded-xl shadow-lg p-8 border border-gray-100 overflow-hidden">
+              <div className="col-span-2 overflow-hidden rounded-xl border border-gray-100 bg-white p-8 shadow-lg">
                 <div className="relative" style={{ height: '400px' }}>
                   <PieChart
-                    data={data}
                     selectedSector={selectedSector}
                     selectedCountries={selectedCountries}
-                    onSectorSelect={handleSectorSelect}
-                    viewState={viewState}
-                    sectorWeights={sectorWeights}
+                    aggregatedData={aggregatedData}
+                    onSubSectorSelect={setSelectedSubsector}
+                    selectedSubsector={selectedSubsector}
                   />
                 </div>
               </div>
             </div>
 
             {/* Data Table */}
-            <div className="bg-white rounded-xl shadow-lg p-8 border border-gray-100">
+            <div className="rounded-xl border border-gray-100 bg-white p-8 shadow-lg">
               <DataTable
-                data={data}
-                columns={getActiveColumns()}
                 selectedSector={selectedSector}
                 selectedCountries={selectedCountries}
-                viewState={viewState}
-                handleSort={handleSort}
-                sectorWeights={sectorWeights}
-                aiSubsectorWeights={aiSubsectorWeights}
-                quantumSubsectorWeights={quantumSubsectorWeights}
-                semiconductorsSubsectorWeights={semiconductorsSubsectorWeights}
-                biotechSubsectorWeights={biotechSubsectorWeights}
-                spaceSubsectorWeights={spaceSubsectorWeights}
+                aggregatedData={aggregatedData}
+                selectedSubsector={selectedSubsector}
               />
             </div>
           </div>
@@ -501,5 +192,3 @@ function App() {
     </div>
   );
 }
-
-export default App;

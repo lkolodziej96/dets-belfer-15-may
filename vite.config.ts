@@ -1,7 +1,8 @@
-import { defineConfig, type Plugin } from 'vite';
-import react from '@vitejs/plugin-react';
-import xlsx from 'xlsx';
 import legacy from '@vitejs/plugin-legacy';
+import react from '@vitejs/plugin-react';
+import path from 'node:path';
+import { defineConfig, type Plugin } from 'vite';
+import xlsx from 'xlsx';
 
 export function excelToJsonPlugin({ excludeSheets }: { excludeSheets?: string[] }): Plugin {
   return {
@@ -46,6 +47,11 @@ export default defineConfig({
       modernPolyfills: ['es.object.group-by'],
     }),
   ],
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, './src'),
+    },
+  },
   optimizeDeps: {
     exclude: ['lucide-react'],
   },

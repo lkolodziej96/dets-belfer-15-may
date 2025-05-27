@@ -1,47 +1,95 @@
-import React, { useState } from 'react';
-import type { CountryData, ViewState } from '../types';
+import React, { useState, useMemo } from 'react';
+
+import type { AggregatedCountryData } from '@/data/types';
+import { getSectorColor } from '@/sectors/colors';
+import { getSectorLabel } from '@/sectors/labels';
+import { getSectorList, type Sector } from '@/sectors/sectorDef';
+import { getSubsectorLabel } from '@/subsectors/labels';
+import { getSubsectorList } from '@/subsectors/subsectorsDef';
+import { theme } from '@/theme';
+import { getPercentage } from '@/utils/display';
+import { cn } from '@/utils/styling';
+
 import { calculateColorIntensity } from '../utils/dataProcessing';
-import { sectorColors, viewBaseColors, subsectorDefinitions } from '../utils/constants';
 
-interface Column {
-  key: string;
-  name: string;
-}
-
-interface Props {
-  data: CountryData[];
-  columns: Column[];
-  viewState: ViewState;
-  selectedSector: string | null;
+export type DataTableProps = {
+  selectedSector: Sector | null;
   selectedCountries: string[];
-  handleSort: (key: string) => void;
-  sectorWeights?: Record<string, number>;
-  aiSubsectorWeights: Record<string, number>;
-  quantumSubsectorWeights: Record<string, number>;
-  semiconductorsSubsectorWeights: Record<string, number>;
-  biotechSubsectorWeights: Record<string, number>;
-  spaceSubsectorWeights: Record<string, number>;
-}
+  selectedSubsector: string | null;
+  aggregatedData: AggregatedCountryData[];
+};
 
-const DataTable: React.FC<Props> = ({
-  data,
-  columns,
-  viewState,
+export default function DataTable({
   selectedSector,
   selectedCountries,
-  handleSort,
-  sectorWeights = {},
-  aiSubsectorWeights,
-  quantumSubsectorWeights,
-  semiconductorsSubsectorWeights,
-  biotechSubsectorWeights,
-  spaceSubsectorWeights,
-}) => {
-  const [sortField, setSortField] = useState<string>('totalScore');
-  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
-  const [tooltipContent, setTooltipContent] = useState<string>('');
+  aggregatedData,
+  selectedSubsector,
+}: DataTableProps) {
+  const tableColumnKeys = useMemo(() => {
+    return selectedSector ? getSubsectorList(selectedSector) : getSectorList();
+  }, [selectedSector]);
+  const columns = useMemo(
+    () =>
+      tableColumnKeys.map((key) => ({
+        key,
+        label: selectedSector
+          ? getSubsectorLabel(selectedSector, key)
+          : getSectorLabel(key as Sector),
+      })),
+    [selectedSector, tableColumnKeys],
+  );
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
   const [showTooltip, setShowTooltip] = useState(false);
+  const [sortField, setSortField] = useState<string>('total');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+  const [tooltipContent, setTooltipContent] = useState<string>('');
+
+  const tableData = useMemo(
+    () =>
+      aggregatedData
+        .toSorted((a, b) => {
+          if (sortField === 'country') {
+            return sortDirection === 'asc'
+              ? a.country.localeCompare(b.country)
+              : b.country.localeCompare(a.country);
+          }
+          if (sortField === 'total') {
+            return sortDirection === 'asc' ? a.total - b.total : b.total - a.total;
+          }
+
+          const aValue = a.data[sortField];
+          const bValue = b.data[sortField];
+
+          return sortDirection === 'asc' ? aValue - bValue : bValue - aValue;
+        })
+        .map(({ country, data, total }) => ({
+          country,
+          data: Object.entries(data).reduce(
+            (acc, [key, value]) => {
+              acc[key] = getPercentage(value);
+              return acc;
+            },
+            {} as Record<string, number>,
+          ),
+          total: getPercentage(total),
+        })),
+    [aggregatedData, sortField, sortDirection],
+  );
+
+  const maxScores = useMemo(
+    () =>
+      tableData.reduce(
+        (acc, { data, total }) => {
+          Object.entries(data).forEach(([key, value]) => {
+            acc[key] = Math.max(acc[key] ?? 0, value as number);
+          });
+          acc.total = Math.max(acc.total ?? 0, total as number);
+          return acc;
+        },
+        {} as Record<string, number>,
+      ),
+    [tableData],
+  );
 
   const handleHeaderClick = (field: string) => {
     if (field === sortField) {
@@ -50,239 +98,6 @@ const DataTable: React.FC<Props> = ({
       setSortField(field);
       setSortDirection('desc');
     }
-    handleSort(field);
-  };
-
-  // Calculate score for a single subsector with exact precision
-  const calculateSubsectorScore = (value: number = 0, weight: number = 0): number => {
-    return Number((value * weight).toFixed(15));
-  };
-
-  // Calculate score for a single sector based on its subsectors with exact precision
-  const calculateSectorScore = (
-    sectorDetails: Record<string, number> = {},
-    weights: Record<string, number>,
-  ): number => {
-    return Number(
-      Object.entries(sectorDetails)
-        .reduce((total, [key, value]) => {
-          return total + calculateSubsectorScore(value, weights[key] ?? 0);
-        }, 0)
-        .toFixed(15),
-    );
-  };
-
-  const sortedData = React.useMemo(() => {
-    return [...data].sort((a, b) => {
-      if (sortField === 'country') {
-        return sortDirection === 'asc'
-          ? a.country.localeCompare(b.country)
-          : b.country.localeCompare(a.country);
-      }
-
-      let aValue = 0,
-        bValue = 0;
-
-      if (viewState.type === 'sector' && viewState.sector) {
-        // For sector view, sort by subsector value or sum of subsectors
-        if (sortField === 'totalScore') {
-          // Sum all visible subsector scores with exact precision
-          aValue = Number(
-            columns
-              .reduce((sum, { key }) => {
-                const value = a.sectorDetails?.[viewState.sector]?.[key] ?? 0;
-                return sum + value;
-              }, 0)
-              .toFixed(15),
-          );
-          bValue = Number(
-            columns
-              .reduce((sum, { key }) => {
-                const value = b.sectorDetails?.[viewState.sector]?.[key] ?? 0;
-                return sum + value;
-              }, 0)
-              .toFixed(15),
-          );
-        } else {
-          // Sort by individual subsector
-          aValue = a.sectorDetails?.[viewState.sector]?.[sortField] ?? 0;
-          bValue = b.sectorDetails?.[viewState.sector]?.[sortField] ?? 0;
-        }
-      } else {
-        // For overview, sort by sector score or total
-        if (sortField === 'totalScore') {
-          // Sum all visible sector scores with exact precision
-          aValue = Number(
-            columns
-              .reduce((sum, { key }) => {
-                const weights =
-                  key === 'ai'
-                    ? aiSubsectorWeights
-                    : key === 'quantum'
-                      ? quantumSubsectorWeights
-                      : key === 'semiconductors'
-                        ? semiconductorsSubsectorWeights
-                        : key === 'biotech'
-                          ? biotechSubsectorWeights
-                          : spaceSubsectorWeights;
-
-                const sectorValue = calculateSectorScore(a.sectorDetails?.[key], weights);
-                return sum + sectorValue * (sectorWeights[key] ?? 0);
-              }, 0)
-              .toFixed(15),
-          );
-          bValue = Number(
-            columns
-              .reduce((sum, { key }) => {
-                const weights =
-                  key === 'ai'
-                    ? aiSubsectorWeights
-                    : key === 'quantum'
-                      ? quantumSubsectorWeights
-                      : key === 'semiconductors'
-                        ? semiconductorsSubsectorWeights
-                        : key === 'biotech'
-                          ? biotechSubsectorWeights
-                          : spaceSubsectorWeights;
-
-                const sectorValue = calculateSectorScore(b.sectorDetails?.[key], weights);
-                return sum + sectorValue * (sectorWeights[key] ?? 0);
-              }, 0)
-              .toFixed(15),
-          );
-        } else {
-          // Sort by individual sector
-          const weights =
-            sortField === 'ai'
-              ? aiSubsectorWeights
-              : sortField === 'quantum'
-                ? quantumSubsectorWeights
-                : sortField === 'semiconductors'
-                  ? semiconductorsSubsectorWeights
-                  : sortField === 'biotech'
-                    ? biotechSubsectorWeights
-                    : spaceSubsectorWeights;
-
-          aValue =
-            calculateSectorScore(a.sectorDetails?.[sortField], weights) *
-            (sectorWeights[sortField] ?? 0);
-          bValue =
-            calculateSectorScore(b.sectorDetails?.[sortField], weights) *
-            (sectorWeights[sortField] ?? 0);
-        }
-      }
-
-      return sortDirection === 'asc' ? aValue - bValue : bValue - aValue;
-    });
-  }, [
-    data,
-    sortField,
-    sortDirection,
-    viewState,
-    columns,
-    sectorWeights,
-    aiSubsectorWeights,
-    quantumSubsectorWeights,
-    semiconductorsSubsectorWeights,
-    biotechSubsectorWeights,
-    spaceSubsectorWeights,
-  ]);
-
-  const maxScores = React.useMemo(() => {
-    if (viewState.type === 'sector' && viewState.sector) {
-      // Find max scores for each subsector
-      const subsectorMaxes = columns.reduce(
-        (acc, { key }) => {
-          acc[key] = Math.max(...data.map((d) => d.sectorDetails?.[viewState.sector]?.[key] ?? 0));
-          return acc;
-        },
-        {} as Record<string, number>,
-      );
-
-      // Calculate max total as sum of visible subsectors with exact precision
-      subsectorMaxes.totalScore = Math.max(
-        ...data.map((d) =>
-          Number(
-            columns
-              .reduce((sum, { key }) => {
-                const value = d.sectorDetails?.[viewState.sector]?.[key] ?? 0;
-                return sum + value;
-              }, 0)
-              .toFixed(15),
-          ),
-        ),
-      );
-
-      return subsectorMaxes;
-    }
-
-    // For overview, find max scores for each sector and total
-    return {
-      ...columns.reduce(
-        (acc, { key }) => {
-          const weights =
-            key === 'ai'
-              ? aiSubsectorWeights
-              : key === 'quantum'
-                ? quantumSubsectorWeights
-                : key === 'semiconductors'
-                  ? semiconductorsSubsectorWeights
-                  : key === 'biotech'
-                    ? biotechSubsectorWeights
-                    : spaceSubsectorWeights;
-
-          acc[key] = Math.max(
-            ...data.map(
-              (d) =>
-                calculateSectorScore(d.sectorDetails?.[key], weights) * (sectorWeights[key] ?? 0),
-            ),
-          );
-          return acc;
-        },
-        {} as Record<string, number>,
-      ),
-      // Calculate max total as sum of visible sectors with exact precision
-      totalScore: Math.max(
-        ...data.map((d) =>
-          Number(
-            columns
-              .reduce((sum, { key }) => {
-                const weights =
-                  key === 'ai'
-                    ? aiSubsectorWeights
-                    : key === 'quantum'
-                      ? quantumSubsectorWeights
-                      : key === 'semiconductors'
-                        ? semiconductorsSubsectorWeights
-                        : key === 'biotech'
-                          ? biotechSubsectorWeights
-                          : spaceSubsectorWeights;
-
-                const sectorValue = calculateSectorScore(d.sectorDetails?.[key], weights);
-                return sum + sectorValue * (sectorWeights[key] ?? 0);
-              }, 0)
-              .toFixed(15),
-          ),
-        ),
-      ),
-    };
-  }, [
-    data,
-    columns,
-    viewState,
-    sectorWeights,
-    aiSubsectorWeights,
-    quantumSubsectorWeights,
-    semiconductorsSubsectorWeights,
-    biotechSubsectorWeights,
-    spaceSubsectorWeights,
-  ]);
-
-  const getHeaderColor = () => {
-    if (viewState.type === 'sector' && viewState.sector) {
-      return viewBaseColors[viewState.sector];
-    }
-    return viewBaseColors.main;
   };
 
   const handleHeaderMouseEnter = (event: React.MouseEvent, name: string) => {
@@ -299,11 +114,13 @@ const DataTable: React.FC<Props> = ({
     setShowTooltip(false);
   };
 
+  const headerColor = selectedSector ? getSectorColor(selectedSector) : theme.colors.main;
+
   return (
-    <div className="overflow-hidden relative">
+    <div className="relative overflow-hidden">
       {showTooltip && (
         <div
-          className="fixed z-50 bg-gray-900 text-white px-3 py-2 rounded-md text-sm shadow-lg whitespace-nowrap"
+          className="fixed z-50 whitespace-nowrap rounded-md bg-gray-900 px-3 py-2 text-sm text-white shadow-lg"
           style={{
             left: tooltipPosition.x,
             top: tooltipPosition.y,
@@ -314,11 +131,11 @@ const DataTable: React.FC<Props> = ({
           {tooltipContent}
         </div>
       )}
-      <table className="w-full divide-y divide-gray-200 table-fixed">
-        <thead style={{ backgroundColor: getHeaderColor() }}>
+      <table className="w-full table-fixed divide-y divide-gray-200">
+        <thead style={{ backgroundColor: headerColor }}>
           <tr>
             <th
-              className="w-[15%] px-2 py-3 text-left text-[11px] font-medium text-white uppercase tracking-wider cursor-pointer hover:opacity-80"
+              className="w-[15%] cursor-pointer px-2 py-3 text-left text-[11px] font-medium uppercase tracking-wider text-white hover:opacity-80"
               onClick={() => handleHeaderClick('country')}
               onMouseEnter={(e) => handleHeaderMouseEnter(e, 'Country')}
               onMouseLeave={handleHeaderMouseLeave}
@@ -330,19 +147,20 @@ const DataTable: React.FC<Props> = ({
                 )}
               </div>
             </th>
-            {columns.map(({ key, name }) => (
+            {columns.map(({ key, label }) => (
               <th
                 key={key}
-                className={`w-[7.5%] px-2 py-3 text-left text-[11px] font-medium text-white uppercase tracking-wider cursor-pointer hover:opacity-80 ${
-                  selectedSector && selectedSector !== key ? 'opacity-50' : ''
-                }`}
+                className={cn(
+                  'w-[7.5%] cursor-pointer px-2 py-3 text-left text-[11px] font-medium uppercase tracking-wider text-white hover:opacity-80',
+                  { 'opacity-50': selectedSubsector && selectedSubsector !== key },
+                )}
                 onClick={() => handleHeaderClick(key)}
-                onMouseEnter={(e) => handleHeaderMouseEnter(e, name)}
+                onMouseEnter={(e) => handleHeaderMouseEnter(e, label)}
                 onMouseLeave={handleHeaderMouseLeave}
               >
-                <div className="h-12 flex items-center">
-                  <span className="break-words line-clamp-2">
-                    {name}
+                <div className="flex h-12 items-center">
+                  <span className="line-clamp-2 break-words">
+                    {label}
                     {sortField === key && (
                       <span className="ml-1">{sortDirection === 'asc' ? '↑' : '↓'}</span>
                     )}
@@ -351,102 +169,60 @@ const DataTable: React.FC<Props> = ({
               </th>
             ))}
             <th
-              className="w-[7.5%] px-2 py-3 text-left text-[11px] font-medium text-white uppercase tracking-wider cursor-pointer hover:opacity-80"
-              onClick={() => handleHeaderClick('totalScore')}
+              className="w-[7.5%] cursor-pointer px-2 py-3 text-left text-[11px] font-medium uppercase tracking-wider text-white hover:opacity-80"
+              onClick={() => handleHeaderClick('total')}
               onMouseEnter={(e) => handleHeaderMouseEnter(e, 'Total Score')}
               onMouseLeave={handleHeaderMouseLeave}
             >
               <div className="truncate">
                 Total
-                {sortField === 'totalScore' && (
+                {sortField === 'total' && (
                   <span className="ml-1">{sortDirection === 'asc' ? '↑' : '↓'}</span>
                 )}
               </div>
             </th>
           </tr>
         </thead>
-        <tbody className="bg-white divide-y divide-gray-200">
-          {sortedData.map((country) => {
-            // Calculate scores and total based on view type with exact precision
-            let columnScores: number[] = [];
-            let total = 0;
-
-            if (viewState.type === 'sector' && viewState.sector) {
-              // For sector view, show raw subsector scores
-              columnScores = columns.map(
-                ({ key }) => country.sectorDetails?.[viewState.sector]?.[key] ?? 0,
-              );
-              // Total is sum of visible subsector scores
-              total = Number(
-                columnScores.reduce((sum, score) => sum + (score || 0), 0).toFixed(15),
-              );
-            } else {
-              // For overview, show weighted sector scores
-              columnScores = columns.map(({ key }) => {
-                const weights =
-                  key === 'ai'
-                    ? aiSubsectorWeights
-                    : key === 'quantum'
-                      ? quantumSubsectorWeights
-                      : key === 'semiconductors'
-                        ? semiconductorsSubsectorWeights
-                        : key === 'biotech'
-                          ? biotechSubsectorWeights
-                          : spaceSubsectorWeights;
-
-                const sectorScore = calculateSectorScore(country.sectorDetails?.[key], weights);
-                return Number((sectorScore * (sectorWeights[key] ?? 0)).toFixed(15));
-              });
-              // Total is sum of visible sector scores
-              total = Number(
-                columnScores.reduce((sum, score) => sum + (score || 0), 0).toFixed(15),
-              );
-            }
-
+        <tbody className="divide-y divide-gray-200 bg-white">
+          {tableData.map(({ country, data, total }) => {
             return (
               <tr
-                key={country.country}
-                className={`hover:bg-gray-50 ${
-                  selectedCountries.includes(country.country) ? 'bg-blue-50' : ''
-                }`}
+                key={country}
+                className={cn('hover:bg-gray-50', {
+                  'bg-blue-50': selectedCountries.includes(country),
+                })}
               >
-                <td className="px-2 py-2 text-sm font-medium text-gray-900 truncate">
-                  {country.country}
-                </td>
-                {columns.map(({ key }, index) => (
+                <td className="truncate px-2 py-2 text-sm font-medium text-gray-900">{country}</td>
+                {columns.map(({ key }) => (
                   <td
                     key={key}
-                    className={`px-2 py-2 text-sm font-semibold text-center ${
-                      selectedSector && selectedSector !== key ? 'opacity-50' : ''
-                    }`}
+                    className={cn('px-2 py-2 text-center text-sm font-semibold', {
+                      'opacity-50': selectedSubsector && selectedSubsector !== key,
+                    })}
                     style={{
                       backgroundColor: calculateColorIntensity(
-                        columnScores[index],
+                        data[key],
                         maxScores[key],
-                        viewState.type,
-                        viewState.sector,
+                        selectedSector,
                       ),
-                      color: columnScores[index] > maxScores[key] * 0.5 ? 'white' : '#1a202c',
+                      color: data[key] > maxScores[key] * 0.5 ? 'white' : '#1a202c',
                     }}
                   >
-                    {viewState.type === 'main'
-                      ? (columnScores[index] * 100).toFixed(1)
-                      : columnScores[index].toFixed(3)}
+                    {data[key]}
                   </td>
                 ))}
                 <td
-                  className="px-2 py-2 text-sm font-semibold text-center"
+                  className="px-2 py-2 text-center text-sm font-semibold"
                   style={{
                     backgroundColor: calculateColorIntensity(
                       total,
-                      maxScores.totalScore,
-                      viewState.type,
-                      viewState.sector,
+                      maxScores.total,
+                      selectedSector,
                     ),
-                    color: total > maxScores.totalScore * 0.5 ? 'white' : '#1a202c',
+                    color: total > maxScores.total * 0.5 ? 'white' : '#1a202c',
                   }}
                 >
-                  {viewState.type === 'main' ? (total * 100).toFixed(1) : total.toFixed(3)}
+                  {total}
                 </td>
               </tr>
             );
@@ -455,6 +231,4 @@ const DataTable: React.FC<Props> = ({
       </table>
     </div>
   );
-};
-
-export default DataTable;
+}

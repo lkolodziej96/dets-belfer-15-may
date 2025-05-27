@@ -1,50 +1,50 @@
-import React from 'react';
-import { sectorNames, viewBaseColors } from '../utils/constants';
+import { getSectorColor } from '@/sectors/colors';
+import { getSectorLabel } from '@/sectors/labels';
+import { type Sector, getSectorList } from '@/sectors/sectorDef';
+import { cn } from '@/utils/styling';
 
-interface Props {
+export type SectorNavProps = {
   currentSector: string | null;
-  onSectorClick: (sector: string | null) => void;
-}
+  onSectorChange: (sector: Sector | null) => void;
+};
 
-const SectorNav: React.FC<Props> = ({ currentSector, onSectorClick }) => {
+export default function SectorNav({
+  currentSector,
+  onSectorChange: onSectorClick,
+}: SectorNavProps) {
   return (
-    <div className="bg-white border-b border-gray-200 py-6">
-      <div className="max-w-5xl mx-auto">
+    <div className="border-b border-gray-200 bg-white py-6">
+      <div className="mx-auto max-w-5xl">
         <div className="flex items-center justify-center gap-4">
           <button
             onClick={() => onSectorClick(null)}
-            className={`px-8 py-3.5 rounded-xl font-medium text-sm transition-all duration-200 ${
-              !currentSector
-                ? 'bg-[#962437] text-white shadow-lg shadow-[#962437]/20 hover:shadow-[#962437]/30'
-                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-            }`}
+            className={cn(
+              'rounded-xl bg-gray-100 px-8 py-3.5 text-sm font-medium text-gray-600 transition-all duration-200 hover:bg-gray-200',
+              !currentSector && 'bg-main text-white shadow-lg shadow-main/20 hover:shadow-main/30',
+            )}
           >
             Overview
           </button>
-          {Object.entries(sectorNames).map(([key, name]) => {
-            const color = viewBaseColors[key];
-            return (
-              <button
-                key={key}
-                onClick={() => onSectorClick(key)}
-                className={`px-8 py-3.5 rounded-xl font-medium text-sm transition-all duration-200`}
-                style={{
-                  backgroundColor: currentSector === key ? color : 'rgb(243 244 246)',
-                  color: currentSector === key ? 'white' : 'rgb(75 85 99)',
-                  boxShadow:
-                    currentSector === key
-                      ? `0 10px 15px -3px ${color}20, 0 4px 6px -4px ${color}30`
-                      : 'none',
-                }}
-              >
-                {name}
-              </button>
-            );
-          })}
+          {getSectorList().map((sector) => (
+            <button
+              key={sector}
+              onClick={() => onSectorClick(sector)}
+              className="rounded-xl px-8 py-3.5 text-sm font-medium transition-all duration-200"
+              style={{
+                backgroundColor:
+                  currentSector === sector ? getSectorColor(sector) : 'rgb(243 244 246)',
+                color: currentSector === sector ? 'white' : 'rgb(75 85 99)',
+                boxShadow:
+                  currentSector === sector
+                    ? `0 10px 15px -3px ${getSectorColor(sector)}20, 0 4px 6px -4px ${getSectorColor(sector)}30`
+                    : 'none',
+              }}
+            >
+              {getSectorLabel(sector)}
+            </button>
+          ))}
         </div>
       </div>
     </div>
   );
-};
-
-export default SectorNav;
+}
