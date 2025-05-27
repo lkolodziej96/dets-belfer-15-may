@@ -55,14 +55,15 @@ const BarChart: React.FC<Props> = ({
     const calculateSectorScore = (
       sectorDetails: Record<string, number> = {},
       weights: Record<string, number>,
-      sectorWeight: number = 1,
     ): number => {
-      const subsectorTotal = Object.entries(sectorDetails).reduce((total, [key, value]) => {
-        const subsectorScore = calculateSubsectorScore(value, weights[key] ?? 0);
-        return total + subsectorScore;
-      }, 0);
-
-      return Number((subsectorTotal * sectorWeight).toFixed(15));
+      return Number(
+        Object.entries(sectorDetails)
+          .reduce((total, [key, value]) => {
+            const subsectorScore = calculateSubsectorScore(value, weights[key] ?? 0);
+            return total + subsectorScore;
+          }, 0)
+          .toFixed(15),
+      );
     };
 
     // Debug log for US data
@@ -71,11 +72,7 @@ const BarChart: React.FC<Props> = ({
       console.log('US Data in BarChart:', {
         raw: usData.sectorDetails?.ai,
         weights: defaultAISubsectorWeights,
-        calculatedScore: calculateSectorScore(
-          usData.sectorDetails?.ai ?? {},
-          defaultAISubsectorWeights,
-          sectorWeights.ai ?? 1,
-        ),
+        calculatedScore: calculateSectorScore(usData.sectorDetails?.ai ?? {}, defaultAISubsectorWeights),
       });
     }
 
@@ -114,7 +111,9 @@ const BarChart: React.FC<Props> = ({
                 : sector === 'biotech'
                   ? defaultBiotechSubsectorWeights
                   : defaultSpaceSubsectorWeights;
-        return sum + calculateSectorScore(details, weights, sectorWeights[sector] ?? 0);
+
+        const sectorScore = calculateSectorScore(details, weights);
+        return sum + sectorScore * (sectorWeights[sector] ?? 0);
       }, 0);
 
       const bTotal = Object.entries(b.sectorDetails ?? {}).reduce((sum, [sector, details]) => {
@@ -128,7 +127,9 @@ const BarChart: React.FC<Props> = ({
                 : sector === 'biotech'
                   ? defaultBiotechSubsectorWeights
                   : defaultSpaceSubsectorWeights;
-        return sum + calculateSectorScore(details, weights, sectorWeights[sector] ?? 0);
+
+        const sectorScore = calculateSectorScore(details, weights);
+        return sum + sectorScore * (sectorWeights[sector] ?? 0);
       }, 0);
 
       return bTotal - aTotal;
@@ -136,9 +137,7 @@ const BarChart: React.FC<Props> = ({
 
     // Get data keys based on view state
     const keys =
-      viewState.type === 'sector' &&
-      viewState.sector &&
-      sortedData[0]?.sectorDetails?.[viewState.sector]
+      viewState.type === 'sector' && viewState.sector && sortedData[0]?.sectorDetails?.[viewState.sector]
         ? Object.keys(sortedData[0].sectorDetails[viewState.sector])
         : ['ai', 'quantum', 'semiconductors', 'biotech', 'space'];
 
@@ -161,6 +160,7 @@ const BarChart: React.FC<Props> = ({
                     : defaultSemiconductorsSubsectorWeights;
           return calculateSubsectorScore(score, weights[key as keyof typeof weights] ?? 0);
         }
+
         // For main view, calculate sector scores from subsector details with weights
         const subsectorData = d.sectorDetails?.[key] ?? {};
         const weights =
@@ -173,7 +173,9 @@ const BarChart: React.FC<Props> = ({
                 : key === 'quantum'
                   ? defaultQuantumSubsectorWeights
                   : defaultSemiconductorsSubsectorWeights;
-        return calculateSectorScore(subsectorData, weights, sectorWeights[key] ?? 0);
+
+        const sectorScore = calculateSectorScore(subsectorData, weights);
+        return viewState.type === 'main' ? sectorScore * (sectorWeights[key] ?? 0) : sectorScore;
       })(sortedData);
 
     const svg = d3.select(svgRef.current);
@@ -194,8 +196,7 @@ const BarChart: React.FC<Props> = ({
       .padding(0.2);
 
     // Ensure stackData is not empty before calculating max
-    const yMax =
-      stackData.length > 0 ? d3.max(stackData[stackData.length - 1], (d) => d[1]) || 0 : 0;
+    const yMax = stackData.length > 0 ? d3.max(stackData[stackData.length - 1], (d) => d[1]) || 0 : 0;
 
     const y = d3.scaleLinear().domain([0, yMax]).range([innerHeight, 0]);
 
@@ -233,14 +234,7 @@ const BarChart: React.FC<Props> = ({
     if (yAxis.empty()) {
       g.append('g')
         .attr('class', 'y-axis')
-        .call(
-          d3
-            .axisLeft(y)
-            .ticks(8)
-            .tickFormat((d) =>
-              viewState.type === 'main' ? `${(Number(d) * 100).toFixed(1)}` : d.toString(),
-            ),
-        )
+        .call(d3.axisLeft(y).ticks(8))
         .selectAll('text')
         .style('font-family', "'Inter', 'Helvetica', 'Arial', sans-serif")
         .style('font-size', '11px')
@@ -249,14 +243,7 @@ const BarChart: React.FC<Props> = ({
       yAxis
         .transition()
         .duration(750)
-        .call(
-          d3
-            .axisLeft(y)
-            .ticks(8)
-            .tickFormat((d) =>
-              viewState.type === 'main' ? `${(Number(d) * 100).toFixed(1)}` : d.toString(),
-            ),
-        )
+        .call(d3.axisLeft(y).ticks(8))
         .selectAll('text')
         .style('font-family', "'Inter', 'Helvetica', 'Arial', sans-serif")
         .style('font-size', '11px')
@@ -300,15 +287,10 @@ const BarChart: React.FC<Props> = ({
         } else if (viewState.sector === 'quantum') {
           return quantumSubsectorColors[keys[i] as keyof typeof quantumSubsectorColors];
         } else if (viewState.sector === 'semiconductors') {
-          return semiconductorsSubsectorColors[
-            keys[i] as keyof typeof semiconductorsSubsectorColors
-          ];
+          return semiconductorsSubsectorColors[keys[i] as keyof typeof semiconductorsSubsectorColors];
         } else {
           const baseColor = sectorColors[viewState.sector];
-          return d3
-            .color(baseColor)!
-            .brighter(i / keys.length)
-            .toString();
+          return d3.color(baseColor)!.brighter(i / keys.length).toString();
         }
       }
       return sectorColors[keys[i]];
@@ -356,9 +338,7 @@ const BarChart: React.FC<Props> = ({
         const isSelected = selectedCountries.includes(d.data.country);
         return isSelected ? selectedHeight(d) : normalHeight(d);
       })
-      .attr('width', (d) =>
-        selectedCountries.includes(d.data.country) ? selectedWidth : normalWidth,
-      )
+      .attr('width', (d) => (selectedCountries.includes(d.data.country) ? selectedWidth : normalWidth))
       .style('opacity', (d, i, nodes) => {
         const currentKey = keys[d3.select(nodes[i].parentNode).datum().index];
         if (selectedCountries.length && !selectedCountries.includes(d.data.country)) return 0.3;
@@ -467,7 +447,8 @@ const BarChart: React.FC<Props> = ({
                       ? defaultQuantumSubsectorWeights
                       : defaultSemiconductorsSubsectorWeights;
 
-            const score = calculateSectorScore(subsectorData, weights, sectorWeights[sector] ?? 0);
+            const sectorScore = calculateSectorScore(subsectorData, weights);
+            const weightedScore = viewState.type === 'main' ? sectorScore * (sectorWeights[sector] ?? 0) : sectorScore;
 
             tooltipContent += `
               <div style="
@@ -490,7 +471,7 @@ const BarChart: React.FC<Props> = ({
                   ${sector.toUpperCase()}
                 </div>
                 <div style="color: ${sector === hoveredKey ? '#2D3748' : '#718096'};">
-                  ${viewState.type === 'main' ? (score * 100).toFixed(1) : score.toFixed(3)}
+                  ${weightedScore.toFixed(3)}
                 </div>
               </div>
             `;
@@ -523,13 +504,15 @@ const BarChart: React.FC<Props> = ({
                         : sector === 'quantum'
                           ? defaultQuantumSubsectorWeights
                           : defaultSemiconductorsSubsectorWeights;
-                return sum + calculateSectorScore(details, weights, sectorWeights[sector] ?? 0);
+
+                const sectorScore = calculateSectorScore(details, weights);
+                return sum + (viewState.type === 'main' ? sectorScore * (sectorWeights[sector] ?? 0) : sectorScore);
               }, 0);
 
         tooltipContent += `
           </div>
           <div style="font-weight: 600; color: #2D3748; border-top: 1px solid #E2E8F0; padding-top: 6px;">
-            Total Score: ${viewState.type === 'main' ? (totalScore * 100).toFixed(1) : totalScore.toFixed(3)}
+            Total Score: ${totalScore.toFixed(3)}
           </div>
         `;
 
