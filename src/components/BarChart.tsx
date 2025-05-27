@@ -57,15 +57,27 @@ const BarChart: React.FC<Props> = ({
       weights: Record<string, number>,
       sectorWeight: number = 1,
     ): number => {
-      return Number(
-        (
-          Object.entries(sectorDetails)
-            .reduce((total, [key, value]) => {
-              return total + calculateSubsectorScore(value, weights[key] ?? 0);
-            }, 0) * sectorWeight
-        ).toFixed(15),
-      );
+      const subsectorTotal = Object.entries(sectorDetails).reduce((total, [key, value]) => {
+        const subsectorScore = calculateSubsectorScore(value, weights[key] ?? 0);
+        return total + subsectorScore;
+      }, 0);
+
+      return Number((subsectorTotal * sectorWeight).toFixed(15));
     };
+
+    // Debug log for US data
+    const usData = data.find((d) => d.country === 'United States');
+    if (usData) {
+      console.log('US Data in BarChart:', {
+        raw: usData.sectorDetails?.ai,
+        weights: defaultAISubsectorWeights,
+        calculatedScore: calculateSectorScore(
+          usData.sectorDetails?.ai ?? {},
+          defaultAISubsectorWeights,
+          sectorWeights.ai ?? 1,
+        ),
+      });
+    }
 
     // Sort data by total score or sector score
     const sortedData = [...data].sort((a, b) => {
