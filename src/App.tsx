@@ -383,15 +383,6 @@ function App() {
       {/* Header */}
       <div className="bg-white shadow-lg border-b border-gray-100">
         <div className="px-8 py-8">
-          <div className="flex items-center justify-end mb-6">
-            <button
-              onClick={handleReset}
-              className="px-6 py-2.5 bg-gray-100 hover:bg-gray-200 rounded-lg text-gray-700 transition-colors font-medium"
-            >
-              Reset Selection
-            </button>
-          </div>
-
           <div className="text-center">
             <div className="inline-block bg-white rounded-2xl shadow-xl px-8 py-4 border border-gray-100">
               <h1 className="text-4xl font-bold bg-gradient-to-r from-[#962437] to-[#d4526d] bg-clip-text text-transparent">
@@ -433,6 +424,14 @@ function App() {
                 onChange={handleSectorWeightChange}
                 viewState={viewState}
               />
+              <div className="mt-6 pt-6 border-t border-gray-100">
+                <button
+                  onClick={handleReset}
+                  className="w-full px-6 py-2.5 bg-gray-100 hover:bg-gray-200 rounded-lg text-gray-700 transition-colors font-medium"
+                >
+                  Reset Selection
+                </button>
+              </div>
             </div>
           </div>
 
