@@ -382,7 +382,7 @@ function App() {
     <div className="w-[1200px] mx-auto bg-gray-50">
       {/* Header */}
       <div className="bg-white shadow-lg border-b border-gray-100">
-        <div className="px-8 py-8">
+        <div className="px-8 py-4">
           <div className="text-center">
             <div className="inline-block bg-white rounded-2xl shadow-xl px-8 py-4 border border-gray-100">
               <h1 className="text-4xl font-bold bg-gradient-to-r from-[#962437] to-[#d4526d] bg-clip-text text-transparent">
