@@ -46,16 +46,24 @@ const BarChart: React.FC<Props> = ({
     const innerWidth = width - margin.left - margin.right;
     const innerHeight = height - margin.top - margin.bottom;
 
-    // Calculate sector scores based on subsector weights
+    // Calculate subsector score with exact precision
+    const calculateSubsectorScore = (value: number = 0, weight: number = 0): number => {
+      return Number((value * weight).toFixed(15));
+    };
+
+    // Calculate sector score based on subsectors with exact precision
     const calculateSectorScore = (
-      subsectorData: Record<string, number> = {},
+      sectorDetails: Record<string, number> = {},
       weights: Record<string, number>,
       sectorWeight: number = 1,
-    ) => {
-      return (
-        Object.entries(subsectorData || {}).reduce((total, [key, value]) => {
-          return total + (value ?? 0) * (weights[key] ?? 0);
-        }, 0) * sectorWeight
+    ): number => {
+      return Number(
+        (
+          Object.entries(sectorDetails)
+            .reduce((total, [key, value]) => {
+              return total + calculateSubsectorScore(value, weights[key] ?? 0);
+            }, 0) * sectorWeight
+        ).toFixed(15),
       );
     };
 
@@ -139,7 +147,7 @@ const BarChart: React.FC<Props> = ({
                   : viewState.sector === 'quantum'
                     ? defaultQuantumSubsectorWeights
                     : defaultSemiconductorsSubsectorWeights;
-          return score * (weights[key as keyof typeof weights] ?? 0);
+          return calculateSubsectorScore(score, weights[key as keyof typeof weights] ?? 0);
         }
         // For main view, calculate sector scores from subsector details with weights
         const subsectorData = d.sectorDetails?.[key] ?? {};
@@ -389,7 +397,10 @@ const BarChart: React.FC<Props> = ({
                     : defaultSemiconductorsSubsectorWeights;
 
           Object.entries(d.data.sectorDetails[viewState.sector] ?? {}).forEach(([key, score]) => {
-            const weightedScore = (score as number) * (weights[key as keyof typeof weights] ?? 0);
+            const weightedScore = calculateSubsectorScore(
+              score as number,
+              weights[key as keyof typeof weights] ?? 0,
+            );
 
             const color =
               viewState.sector === 'space'
