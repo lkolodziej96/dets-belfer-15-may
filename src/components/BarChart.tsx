@@ -386,7 +386,7 @@ const BarChart: React.FC<Props> = ({
     const rectsEnter = rects
       .enter()
       .append('rect')
-      .attr('x', (d) => x(d.data.country) ?? 0)
+      .attr('x', (d: any) => x(d.data.country) ?? 0)
       .attr('y', innerHeight)
       .attr('height', 0)
       .attr('width', normalW);
@@ -395,18 +395,18 @@ const BarChart: React.FC<Props> = ({
       .merge(rectsEnter)
       .transition()
       .duration(750)
-      .attr('x', (d) => {
+      .attr('x', (d: any) => {
         const base = x(d.data.country) ?? 0;
         return selectedCountries.includes(d.data.country)
           ? base - (selectedW - normalW) / 2
           : base;
       })
-      .attr('y', (d) => y(d[1]))
-      .attr('height', (d) => y(d[0]) - y(d[1]))
-      .attr('width', (d) =>
+      .attr('y', (d: any) => y(d[1]))
+      .attr('height', (d: any) => y(d[0]) - y(d[1]))
+      .attr('width', (d: any) =>
         selectedCountries.includes(d.data.country) ? selectedW : normalW
       )
-      .style('opacity', (_d, i, nodes) => {
+      .style('opacity', (d: any, i, nodes) => {
         const key = keys[d3.select(nodes[i].parentNode).datum().index];
         if (selectedCountries.length && !selectedCountries.includes(d.data.country))
           return 0.3;
@@ -427,7 +427,7 @@ const BarChart: React.FC<Props> = ({
 
     layerMerge
       .selectAll('rect')
-      .on('mouseover', (event, d) => {
+      .on('mouseover', (event, d: any) => {
         const layerKey = keys[
           d3.select(event.currentTarget.parentNode).datum().index
         ];
@@ -475,7 +475,7 @@ const BarChart: React.FC<Props> = ({
         tooltip.style('top', `${my + 8}px`).style('left', `${mx + 8}px`);
       })
       .on('mouseout', () => tooltip.style('visibility', 'hidden'))
-      .on('click', (_e, d) => {
+      .on('click', (_e, d: any) => {
         const c = d.data.country;
         onCountrySelect(
           selectedCountries.includes(c)
