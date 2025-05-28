@@ -16,7 +16,7 @@ interface Props {
   viewState: ViewState;
 }
 
-export function SimpleStackedBars({ data, viewState }: Props) {
+export default function BarChart({ data, viewState }: Props) {
   // Pick the right weight set & color map
   const { weights, colors, keys } = useMemo(() => {
     switch (viewState.sector) {
