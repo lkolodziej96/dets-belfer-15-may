@@ -43,23 +43,40 @@ const BarChart: React.FC<Props> = ({
   const tooltipRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
+  // Helper functions matching DataTable's calculations
+  const calculateSubsectorScore = (value: number = 0, weight: number = 0): number => {
+    return Number((value * weight).toFixed(15));
+  };
+
+  const calculateSectorScore = (
+    sectorDetails: Record<string, number> = {},
+    weights: Record<string, number>,
+  ): number => {
+    return Number(
+      Object.entries(sectorDetails)
+        .reduce((total, [key, value]) => {
+          return total + calculateSubsectorScore(value, weights[key] ?? 0);
+        }, 0)
+        .toFixed(15),
+    );
+  };
+
   // Calculate subsector scores for each sector view
   const aiChartData = useMemo(() => {
     return data.map((d) => {
       const subsectorData = d.sectorDetails?.ai ?? {};
       const weighted: Record<string, number> = {};
-      let total = 0;
 
       Object.entries(defaultAISubsectorWeights).forEach(([key, weight]) => {
-        const value = (subsectorData[key] ?? 0) * weight;
-        weighted[key] = Number(value.toFixed(15));
-        total += value;
+        weighted[key] = calculateSubsectorScore(subsectorData[key], weight);
       });
+
+      const total = calculateSectorScore(subsectorData, defaultAISubsectorWeights);
 
       return {
         country: d.country,
         ...weighted,
-        total: Number(total.toFixed(15)),
+        total,
       };
     });
   }, [data]);
@@ -68,18 +85,17 @@ const BarChart: React.FC<Props> = ({
     return data.map((d) => {
       const subsectorData = d.sectorDetails?.quantum ?? {};
       const weighted: Record<string, number> = {};
-      let total = 0;
 
       Object.entries(defaultQuantumSubsectorWeights).forEach(([key, weight]) => {
-        const value = (subsectorData[key] ?? 0) * weight;
-        weighted[key] = Number(value.toFixed(15));
-        total += value;
+        weighted[key] = calculateSubsectorScore(subsectorData[key], weight);
       });
+
+      const total = calculateSectorScore(subsectorData, defaultQuantumSubsectorWeights);
 
       return {
         country: d.country,
         ...weighted,
-        total: Number(total.toFixed(15)),
+        total,
       };
     });
   }, [data]);
@@ -88,18 +104,17 @@ const BarChart: React.FC<Props> = ({
     return data.map((d) => {
       const subsectorData = d.sectorDetails?.semiconductors ?? {};
       const weighted: Record<string, number> = {};
-      let total = 0;
 
       Object.entries(defaultSemiconductorsSubsectorWeights).forEach(([key, weight]) => {
-        const value = (subsectorData[key] ?? 0) * weight;
-        weighted[key] = Number(value.toFixed(15));
-        total += value;
+        weighted[key] = calculateSubsectorScore(subsectorData[key], weight);
       });
+
+      const total = calculateSectorScore(subsectorData, defaultSemiconductorsSubsectorWeights);
 
       return {
         country: d.country,
         ...weighted,
-        total: Number(total.toFixed(15)),
+        total,
       };
     });
   }, [data]);
@@ -108,18 +123,17 @@ const BarChart: React.FC<Props> = ({
     return data.map((d) => {
       const subsectorData = d.sectorDetails?.biotech ?? {};
       const weighted: Record<string, number> = {};
-      let total = 0;
 
       Object.entries(defaultBiotechSubsectorWeights).forEach(([key, weight]) => {
-        const value = (subsectorData[key] ?? 0) * weight;
-        weighted[key] = Number(value.toFixed(15));
-        total += value;
+        weighted[key] = calculateSubsectorScore(subsectorData[key], weight);
       });
+
+      const total = calculateSectorScore(subsectorData, defaultBiotechSubsectorWeights);
 
       return {
         country: d.country,
         ...weighted,
-        total: Number(total.toFixed(15)),
+        total,
       };
     });
   }, [data]);
@@ -128,18 +142,17 @@ const BarChart: React.FC<Props> = ({
     return data.map((d) => {
       const subsectorData = d.sectorDetails?.space ?? {};
       const weighted: Record<string, number> = {};
-      let total = 0;
 
       Object.entries(defaultSpaceSubsectorWeights).forEach(([key, weight]) => {
-        const value = (subsectorData[key] ?? 0) * weight;
-        weighted[key] = Number(value.toFixed(15));
-        total += value;
+        weighted[key] = calculateSubsectorScore(subsectorData[key], weight);
       });
+
+      const total = calculateSectorScore(subsectorData, defaultSpaceSubsectorWeights);
 
       return {
         country: d.country,
         ...weighted,
-        total: Number(total.toFixed(15)),
+        total,
       };
     });
   }, [data]);
@@ -156,15 +169,20 @@ const BarChart: React.FC<Props> = ({
       };
 
       const weighted = {
-        ai: Number((sectorTotals.ai * (sectorWeights.ai ?? 0)).toFixed(15)),
-        quantum: Number((sectorTotals.quantum * (sectorWeights.quantum ?? 0)).toFixed(15)),
-        semiconductors: Number((sectorTotals.semiconductors * (sectorWeights.semiconductors ?? 0)).toFixed(15)),
-        biotech: Number((sectorTotals.biotech * (sectorWeights.biotech ?? 0)).toFixed(15)),
-        space: Number((sectorTotals.space * (sectorWeights.space ?? 0)).toFixed(15)),
+        ai: calculateSubsectorScore(sectorTotals.ai, sectorWeights.ai ?? 0),
+        quantum: calculateSubsectorScore(sectorTotals.quantum, sectorWeights.quantum ?? 0),
+        semiconductors: calculateSubsectorScore(
+          sectorTotals.semiconductors,
+          sectorWeights.semiconductors ?? 0,
+        ),
+        biotech: calculateSubsectorScore(sectorTotals.biotech, sectorWeights.biotech ?? 0),
+        space: calculateSubsectorScore(sectorTotals.space, sectorWeights.space ?? 0),
       };
 
       const total = Number(
-        Object.values(weighted).reduce((sum, score) => sum + score, 0).toFixed(15),
+        Object.values(weighted)
+          .reduce((sum, score) => sum + score, 0)
+          .toFixed(15),
       );
 
       return {
