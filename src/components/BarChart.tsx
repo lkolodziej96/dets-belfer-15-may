@@ -31,11 +31,6 @@ interface ChartDataItem {
   total: number;
 }
 
-interface StackDatum {
-  [key: string]: number;
-  data: ChartDataItem;
-}
-
 const BarChart: React.FC<Props> = ({
   data,
   selectedSector,
@@ -48,147 +43,145 @@ const BarChart: React.FC<Props> = ({
   const tooltipRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const aiKeys = Object.keys(defaultAISubsectorWeights);
-  const quantumKeys = Object.keys(defaultQuantumSubsectorWeights);
-  const semiconductorsKeys = Object.keys(defaultSemiconductorsSubsectorWeights);
-  const biotechKeys = Object.keys(defaultBiotechSubsectorWeights);
-  const spaceKeys = Object.keys(defaultSpaceSubsectorWeights);
+  // Calculate subsector scores for each sector view
+  const aiChartData = useMemo(() => {
+    return data.map((d) => {
+      const subsectorData = d.sectorDetails?.ai ?? {};
+      const weighted: Record<string, number> = {};
+      let total = 0;
 
-  // Calculate raw sector scores first (without top-level weights)
-  const aiChartData = useMemo(
-    () =>
-      data.map((d) => {
-        const raw = d.sectorDetails?.ai ?? {};
-        let sectorTotal = 0;
+      Object.entries(defaultAISubsectorWeights).forEach(([key, weight]) => {
+        const value = (subsectorData[key] ?? 0) * weight;
+        weighted[key] = Number(value.toFixed(15));
+        total += value;
+      });
 
-        aiKeys.forEach((k) => {
-          sectorTotal += (raw[k] ?? 0) * defaultAISubsectorWeights[k];
-        });
+      return {
+        country: d.country,
+        ...weighted,
+        total: Number(total.toFixed(15)),
+      };
+    });
+  }, [data]);
 
-        return {
-          country: d.country,
-          ai: Number(sectorTotal.toFixed(15)),
-          total: Number(sectorTotal.toFixed(15)),
-        };
-      }),
-    [data, aiKeys],
-  );
+  const quantumChartData = useMemo(() => {
+    return data.map((d) => {
+      const subsectorData = d.sectorDetails?.quantum ?? {};
+      const weighted: Record<string, number> = {};
+      let total = 0;
 
-  const quantumChartData = useMemo(
-    () =>
-      data.map((d) => {
-        const raw = d.sectorDetails?.quantum ?? {};
-        let sectorTotal = 0;
+      Object.entries(defaultQuantumSubsectorWeights).forEach(([key, weight]) => {
+        const value = (subsectorData[key] ?? 0) * weight;
+        weighted[key] = Number(value.toFixed(15));
+        total += value;
+      });
 
-        quantumKeys.forEach((k) => {
-          sectorTotal += (raw[k] ?? 0) * defaultQuantumSubsectorWeights[k];
-        });
+      return {
+        country: d.country,
+        ...weighted,
+        total: Number(total.toFixed(15)),
+      };
+    });
+  }, [data]);
 
-        return {
-          country: d.country,
-          quantum: Number(sectorTotal.toFixed(15)),
-          total: Number(sectorTotal.toFixed(15)),
-        };
-      }),
-    [data, quantumKeys],
-  );
+  const semiconductorsChartData = useMemo(() => {
+    return data.map((d) => {
+      const subsectorData = d.sectorDetails?.semiconductors ?? {};
+      const weighted: Record<string, number> = {};
+      let total = 0;
 
-  const semiconductorsChartData = useMemo(
-    () =>
-      data.map((d) => {
-        const raw = d.sectorDetails?.semiconductors ?? {};
-        let sectorTotal = 0;
+      Object.entries(defaultSemiconductorsSubsectorWeights).forEach(([key, weight]) => {
+        const value = (subsectorData[key] ?? 0) * weight;
+        weighted[key] = Number(value.toFixed(15));
+        total += value;
+      });
 
-        semiconductorsKeys.forEach((k) => {
-          sectorTotal += (raw[k] ?? 0) * defaultSemiconductorsSubsectorWeights[k];
-        });
+      return {
+        country: d.country,
+        ...weighted,
+        total: Number(total.toFixed(15)),
+      };
+    });
+  }, [data]);
 
-        return {
-          country: d.country,
-          semiconductors: Number(sectorTotal.toFixed(15)),
-          total: Number(sectorTotal.toFixed(15)),
-        };
-      }),
-    [data, semiconductorsKeys],
-  );
+  const biotechChartData = useMemo(() => {
+    return data.map((d) => {
+      const subsectorData = d.sectorDetails?.biotech ?? {};
+      const weighted: Record<string, number> = {};
+      let total = 0;
 
-  const biotechChartData = useMemo(
-    () =>
-      data.map((d) => {
-        const raw = d.sectorDetails?.biotech ?? {};
-        let sectorTotal = 0;
+      Object.entries(defaultBiotechSubsectorWeights).forEach(([key, weight]) => {
+        const value = (subsectorData[key] ?? 0) * weight;
+        weighted[key] = Number(value.toFixed(15));
+        total += value;
+      });
 
-        biotechKeys.forEach((k) => {
-          sectorTotal += (raw[k] ?? 0) * defaultBiotechSubsectorWeights[k];
-        });
+      return {
+        country: d.country,
+        ...weighted,
+        total: Number(total.toFixed(15)),
+      };
+    });
+  }, [data]);
 
-        return {
-          country: d.country,
-          biotech: Number(sectorTotal.toFixed(15)),
-          total: Number(sectorTotal.toFixed(15)),
-        };
-      }),
-    [data, biotechKeys],
-  );
+  const spaceChartData = useMemo(() => {
+    return data.map((d) => {
+      const subsectorData = d.sectorDetails?.space ?? {};
+      const weighted: Record<string, number> = {};
+      let total = 0;
 
-  const spaceChartData = useMemo(
-    () =>
-      data.map((d) => {
-        const raw = d.sectorDetails?.space ?? {};
-        let sectorTotal = 0;
+      Object.entries(defaultSpaceSubsectorWeights).forEach(([key, weight]) => {
+        const value = (subsectorData[key] ?? 0) * weight;
+        weighted[key] = Number(value.toFixed(15));
+        total += value;
+      });
 
-        spaceKeys.forEach((k) => {
-          sectorTotal += (raw[k] ?? 0) * defaultSpaceSubsectorWeights[k];
-        });
+      return {
+        country: d.country,
+        ...weighted,
+        total: Number(total.toFixed(15)),
+      };
+    });
+  }, [data]);
 
-        return {
-          country: d.country,
-          space: Number(sectorTotal.toFixed(15)),
-          total: Number(sectorTotal.toFixed(15)),
-        };
-      }),
-    [data, spaceKeys],
-  );
+  // Calculate overview data with top-level sector weights
+  const mainChartData = useMemo(() => {
+    return data.map((d) => {
+      const sectorTotals = {
+        ai: aiChartData.find((c) => c.country === d.country)?.total ?? 0,
+        quantum: quantumChartData.find((c) => c.country === d.country)?.total ?? 0,
+        semiconductors: semiconductorsChartData.find((c) => c.country === d.country)?.total ?? 0,
+        biotech: biotechChartData.find((c) => c.country === d.country)?.total ?? 0,
+        space: spaceChartData.find((c) => c.country === d.country)?.total ?? 0,
+      };
 
-  // Now apply top-level sector weights
-  const mainChartData = useMemo(
-    () =>
-      data.map((d) => {
-        const aiScore = aiChartData.find((c) => c.country === d.country)?.total ?? 0;
-        const quantumScore = quantumChartData.find((c) => c.country === d.country)?.total ?? 0;
-        const semiconductorsScore =
-          semiconductorsChartData.find((c) => c.country === d.country)?.total ?? 0;
-        const biotechScore = biotechChartData.find((c) => c.country === d.country)?.total ?? 0;
-        const spaceScore = spaceChartData.find((c) => c.country === d.country)?.total ?? 0;
+      const weighted = {
+        ai: Number((sectorTotals.ai * (sectorWeights.ai ?? 0)).toFixed(15)),
+        quantum: Number((sectorTotals.quantum * (sectorWeights.quantum ?? 0)).toFixed(15)),
+        semiconductors: Number((sectorTotals.semiconductors * (sectorWeights.semiconductors ?? 0)).toFixed(15)),
+        biotech: Number((sectorTotals.biotech * (sectorWeights.biotech ?? 0)).toFixed(15)),
+        space: Number((sectorTotals.space * (sectorWeights.space ?? 0)).toFixed(15)),
+      };
 
-        const weighted = {
-          ai: Number((aiScore * (sectorWeights.ai ?? 0)).toFixed(15)),
-          quantum: Number((quantumScore * (sectorWeights.quantum ?? 0)).toFixed(15)),
-          semiconductors: Number((semiconductorsScore * (sectorWeights.semiconductors ?? 0)).toFixed(15)),
-          biotech: Number((biotechScore * (sectorWeights.biotech ?? 0)).toFixed(15)),
-          space: Number((spaceScore * (sectorWeights.space ?? 0)).toFixed(15)),
-        };
+      const total = Number(
+        Object.values(weighted).reduce((sum, score) => sum + score, 0).toFixed(15),
+      );
 
-        const total = Number(
-          Object.values(weighted).reduce((sum, score) => sum + score, 0).toFixed(15),
-        );
-
-        return {
-          country: d.country,
-          ...weighted,
-          total,
-        };
-      }),
-    [
-      data,
-      aiChartData,
-      quantumChartData,
-      semiconductorsChartData,
-      biotechChartData,
-      spaceChartData,
-      sectorWeights,
-    ],
-  );
+      return {
+        country: d.country,
+        ...weighted,
+        total,
+      };
+    });
+  }, [
+    data,
+    aiChartData,
+    quantumChartData,
+    semiconductorsChartData,
+    biotechChartData,
+    spaceChartData,
+    sectorWeights,
+  ]);
 
   useEffect(() => {
     if (!svgRef.current || !containerRef.current || data.length === 0) return;
@@ -199,6 +192,7 @@ const BarChart: React.FC<Props> = ({
     const innerWidth = width - margin.left - margin.right;
     const innerHeight = height - margin.top - margin.bottom;
 
+    // Get the appropriate data and keys based on view state
     const chartData =
       viewState.type === 'sector'
         ? viewState.sector === 'ai'
@@ -214,15 +208,17 @@ const BarChart: React.FC<Props> = ({
 
     const keys =
       viewState.type === 'sector'
-        ? viewState.sector === 'ai'
-          ? aiKeys
-          : viewState.sector === 'quantum'
-          ? quantumKeys
-          : viewState.sector === 'semiconductors'
-          ? semiconductorsKeys
-          : viewState.sector === 'biotech'
-          ? biotechKeys
-          : spaceKeys
+        ? Object.keys(
+            viewState.sector === 'ai'
+              ? defaultAISubsectorWeights
+              : viewState.sector === 'quantum'
+              ? defaultQuantumSubsectorWeights
+              : viewState.sector === 'semiconductors'
+              ? defaultSemiconductorsSubsectorWeights
+              : viewState.sector === 'biotech'
+              ? defaultBiotechSubsectorWeights
+              : defaultSpaceSubsectorWeights,
+          )
         : ['ai', 'quantum', 'semiconductors', 'biotech', 'space'];
 
     const sortedData = [...chartData].sort((a, b) => (b.total || 0) - (a.total || 0));
@@ -275,7 +271,7 @@ const BarChart: React.FC<Props> = ({
       .style('stroke', '#cbd5e0')
       .style('stroke-width', '1px');
 
-    const layerGroups = g.selectAll<SVGGElement, d3.Series<ChartDataItem, string>>('g.layer').data(layers);
+    const layerGroups = g.selectAll('g.layer').data(layers);
     layerGroups.exit().remove();
 
     const layerGroupsEnter = layerGroups
@@ -288,26 +284,26 @@ const BarChart: React.FC<Props> = ({
       if (viewState.type === 'sector') {
         switch (viewState.sector) {
           case 'ai':
-            return aiSubsectorColors[key as keyof typeof aiSubsectorColors];
+            return aiSubsectorColors[key];
           case 'quantum':
-            return quantumSubsectorColors[key as keyof typeof quantumSubsectorColors];
+            return quantumSubsectorColors[key];
           case 'semiconductors':
-            return semiconductorsSubsectorColors[key as keyof typeof semiconductorsSubsectorColors];
+            return semiconductorsSubsectorColors[key];
           case 'biotech':
-            return biotechSubsectorColors[key as keyof typeof biotechSubsectorColors];
+            return biotechSubsectorColors[key];
           case 'space':
-            return spaceSubsectorColors[key as keyof typeof spaceSubsectorColors];
+            return spaceSubsectorColors[key];
           default:
             return '#e2e8f0';
         }
       }
-      return sectorColors[key as keyof typeof sectorColors];
+      return sectorColors[key];
     });
 
     const normalW = x.bandwidth();
     const selectedW = normalW * 1.1;
 
-    const rects = layerMerge.selectAll<SVGRectElement, d3.SeriesPoint<ChartDataItem>>('rect').data((d) => d);
+    const rects = layerMerge.selectAll('rect').data((d) => d);
     rects.exit().remove();
 
     const rectsEnter = rects
@@ -334,7 +330,7 @@ const BarChart: React.FC<Props> = ({
         selectedCountries.includes(d.data.country) ? selectedW : normalW
       )
       .style('opacity', (d, i, nodes) => {
-        const key = keys[d3.select(nodes[i].parentNode as SVGGElement).datum().index];
+        const key = keys[d3.select(nodes[i].parentNode).datum().index];
         if (selectedCountries.length && !selectedCountries.includes(d.data.country))
           return 0.3;
         if (selectedSector && key !== selectedSector) return 0.3;
@@ -354,34 +350,30 @@ const BarChart: React.FC<Props> = ({
     layerMerge
       .selectAll('rect')
       .on('mouseover', (event, d) => {
-        const layerKey = keys[
-          d3.select(event.currentTarget.parentNode as SVGGElement).datum().index
-        ];
+        const layerKey = keys[d3.select(event.currentTarget.parentNode).datum().index];
         const val = d.data[layerKey];
         const color =
           viewState.type === 'sector'
             ? viewState.sector === 'ai'
-              ? aiSubsectorColors[layerKey as keyof typeof aiSubsectorColors]
+              ? aiSubsectorColors[layerKey]
               : viewState.sector === 'quantum'
-              ? quantumSubsectorColors[layerKey as keyof typeof quantumSubsectorColors]
+              ? quantumSubsectorColors[layerKey]
               : viewState.sector === 'semiconductors'
-              ? semiconductorsSubsectorColors[layerKey as keyof typeof semiconductorsSubsectorColors]
+              ? semiconductorsSubsectorColors[layerKey]
               : viewState.sector === 'biotech'
-              ? biotechSubsectorColors[layerKey as keyof typeof biotechSubsectorColors]
-              : spaceSubsectorColors[layerKey as keyof typeof spaceSubsectorColors]
-            : sectorColors[layerKey as keyof typeof sectorColors];
+              ? biotechSubsectorColors[layerKey]
+              : spaceSubsectorColors[layerKey]
+            : sectorColors[layerKey];
 
         const label =
           viewState.type === 'sector'
-            ? subsectorDefinitions[viewState.sector!][
-                layerKey as keyof typeof subsectorDefinitions['ai']
-              ]
+            ? subsectorDefinitions[viewState.sector!][layerKey]
             : layerKey.toUpperCase();
 
         tooltip
           .html(
             `<strong>${d.data.country}</strong><br/>
-             <span style="color:${color}">■</span> ${label}: ${(val as number).toFixed(3)}<br/>
+             <span style="color:${color}">■</span> ${label}: ${val.toFixed(3)}<br/>
              <em>Total: ${d.data.total.toFixed(3)}</em>`,
           )
           .style('visibility', 'visible');
@@ -412,11 +404,6 @@ const BarChart: React.FC<Props> = ({
     biotechChartData,
     spaceChartData,
     mainChartData,
-    aiKeys,
-    quantumKeys,
-    semiconductorsKeys,
-    biotechKeys,
-    spaceKeys,
   ]);
 
   return (
