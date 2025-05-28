@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useMemo } from 'react';
 import * as d3 from 'd3';
 import type { CountryData, ViewState } from '../types';
 import {
@@ -37,6 +37,119 @@ const BarChart: React.FC<Props> = ({
   const tooltipRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
+  // Pre-compute chart data for each sector
+  const aiKeys = Object.keys(defaultAISubsectorWeights) as Array<keyof typeof defaultAISubsectorWeights>;
+  const quantumKeys = Object.keys(defaultQuantumSubsectorWeights) as Array<keyof typeof defaultQuantumSubsectorWeights>;
+  const semiconductorsKeys = Object.keys(defaultSemiconductorsSubsectorWeights) as Array<keyof typeof defaultSemiconductorsSubsectorWeights>;
+  const biotechKeys = Object.keys(defaultBiotechSubsectorWeights) as Array<keyof typeof defaultBiotechSubsectorWeights>;
+  const spaceKeys = Object.keys(defaultSpaceSubsectorWeights) as Array<keyof typeof defaultSpaceSubsectorWeights>;
+
+  const aiChartData = useMemo(() => 
+    data.map(d => {
+      const raw = d.sectorDetails?.ai || {};
+      const weighted: Record<string, number> = {};
+
+      aiKeys.forEach(k => {
+        weighted[k] = Number(((raw[k] ?? 0) * defaultAISubsectorWeights[k]).toFixed(15));
+      });
+
+      return {
+        country: d.country,
+        ...weighted,
+        ai_total: Number(aiKeys.reduce((sum, k) => sum + weighted[k], 0).toFixed(15))
+      };
+    }), [data]);
+
+  const quantumChartData = useMemo(() =>
+    data.map(d => {
+      const raw = d.sectorDetails?.quantum || {};
+      const weighted: Record<string, number> = {};
+
+      quantumKeys.forEach(k => {
+        weighted[k] = Number(((raw[k] ?? 0) * defaultQuantumSubsectorWeights[k]).toFixed(15));
+      });
+
+      return {
+        country: d.country,
+        ...weighted,
+        quantum_total: Number(quantumKeys.reduce((sum, k) => sum + weighted[k], 0).toFixed(15))
+      };
+    }), [data]);
+
+  const semiconductorsChartData = useMemo(() =>
+    data.map(d => {
+      const raw = d.sectorDetails?.semiconductors || {};
+      const weighted: Record<string, number> = {};
+
+      semiconductorsKeys.forEach(k => {
+        weighted[k] = Number(((raw[k] ?? 0) * defaultSemiconductorsSubsectorWeights[k]).toFixed(15));
+      });
+
+      return {
+        country: d.country,
+        ...weighted,
+        semiconductors_total: Number(semiconductorsKeys.reduce((sum, k) => sum + weighted[k], 0).toFixed(15))
+      };
+    }), [data]);
+
+  const biotechChartData = useMemo(() =>
+    data.map(d => {
+      const raw = d.sectorDetails?.biotech || {};
+      const weighted: Record<string, number> = {};
+
+      biotechKeys.forEach(k => {
+        weighted[k] = Number(((raw[k] ?? 0) * defaultBiotechSubsectorWeights[k]).toFixed(15));
+      });
+
+      return {
+        country: d.country,
+        ...weighted,
+        biotech_total: Number(biotechKeys.reduce((sum, k) => sum + weighted[k], 0).toFixed(15))
+      };
+    }), [data]);
+
+  const spaceChartData = useMemo(() =>
+    data.map(d => {
+      const raw = d.sectorDetails?.space || {};
+      const weighted: Record<string, number> = {};
+
+      spaceKeys.forEach(k => {
+        weighted[k] = Number(((raw[k] ?? 0) * defaultSpaceSubsectorWeights[k]).toFixed(15));
+      });
+
+      return {
+        country: d.country,
+        ...weighted,
+        space_total: Number(spaceKeys.reduce((sum, k) => sum + weighted[k], 0).toFixed(15))
+      };
+    }), [data]);
+
+  // Main view data combines all sector totals
+  const mainChartData = useMemo(() =>
+    data.map(d => {
+      const sectorTotals = {
+        ai: aiChartData.find(c => c.country === d.country)?.ai_total ?? 0,
+        quantum: quantumChartData.find(c => c.country === d.country)?.quantum_total ?? 0,
+        semiconductors: semiconductorsChartData.find(c => c.country === d.country)?.semiconductors_total ?? 0,
+        biotech: biotechChartData.find(c => c.country === d.country)?.biotech_total ?? 0,
+        space: spaceChartData.find(c => c.country === d.country)?.space_total ?? 0,
+      };
+
+      return {
+        country: d.country,
+        ...Object.entries(sectorTotals).reduce((acc, [sector, total]) => ({
+          ...acc,
+          [sector]: Number((total * (sectorWeights[sector] ?? 0)).toFixed(15))
+        }), {}),
+        total: Number(
+          Object.entries(sectorTotals)
+            .reduce((sum, [sector, total]) => 
+              sum + total * (sectorWeights[sector] ?? 0), 0)
+            .toFixed(15)
+        )
+      };
+    }), [data, aiChartData, quantumChartData, semiconductorsChartData, biotechChartData, spaceChartData, sectorWeights]);
+
   useEffect(() => {
     if (!svgRef.current || !data.length || !containerRef.current) return;
 
@@ -46,141 +159,47 @@ const BarChart: React.FC<Props> = ({
     const innerWidth = width - margin.left - margin.right;
     const innerHeight = height - margin.top - margin.bottom;
 
-    // Calculate subsector score with exact precision
-    const calculateSubsectorScore = (value: number = 0, weight: number = 0): number => {
-      return Number((value * weight).toFixed(15));
-    };
+    // Select chart data and keys based on view state
+    const chartData =
+      viewState.type === 'sector'
+        ? viewState.sector === 'ai'
+          ? aiChartData
+          : viewState.sector === 'quantum'
+            ? quantumChartData
+            : viewState.sector === 'semiconductors'
+              ? semiconductorsChartData
+              : viewState.sector === 'biotech'
+                ? biotechChartData
+                : spaceChartData
+        : mainChartData;
 
-    // Calculate sector score based on subsectors with exact precision
-    const calculateSectorScore = (
-      sectorDetails: Record<string, number> = {},
-      weights: Record<string, number>,
-    ): number => {
-      return Number(
-        Object.entries(sectorDetails)
-          .reduce((total, [key, value]) => {
-            const subsectorScore = calculateSubsectorScore(value, weights[key] ?? 0);
-            return total + subsectorScore;
-          }, 0)
-          .toFixed(15),
-      );
-    };
+    const keys =
+      viewState.type === 'sector'
+        ? viewState.sector === 'ai'
+          ? aiKeys
+          : viewState.sector === 'quantum'
+            ? quantumKeys
+            : viewState.sector === 'semiconductors'
+              ? semiconductorsKeys
+              : viewState.sector === 'biotech'
+                ? biotechKeys
+                : spaceKeys
+        : ['ai', 'quantum', 'semiconductors', 'biotech', 'space'];
 
-    // Debug log for US data
-    const usData = data.find((d) => d.country === 'United States');
-    if (usData) {
-      console.log('US Data in BarChart:', {
-        raw: usData.sectorDetails?.ai,
-        weights: defaultAISubsectorWeights,
-        calculatedScore: calculateSectorScore(usData.sectorDetails?.ai ?? {}, defaultAISubsectorWeights),
-      });
-    }
-
-    // Sort data by total score or sector score
-    const sortedData = [...data].sort((a, b) => {
-      if (viewState.type === 'sector' && viewState.sector) {
-        const aDetails = a.sectorDetails?.[viewState.sector] ?? {};
-        const bDetails = b.sectorDetails?.[viewState.sector] ?? {};
-
-        const weights =
-          viewState.sector === 'space'
-            ? defaultSpaceSubsectorWeights
-            : viewState.sector === 'biotech'
-              ? defaultBiotechSubsectorWeights
-              : viewState.sector === 'ai'
-                ? defaultAISubsectorWeights
-                : viewState.sector === 'quantum'
-                  ? defaultQuantumSubsectorWeights
-                  : defaultSemiconductorsSubsectorWeights;
-
-        const aTotal = calculateSectorScore(aDetails, weights);
-        const bTotal = calculateSectorScore(bDetails, weights);
-
-        return bTotal - aTotal;
-      }
-
-      // For overview, calculate total weighted score
-      const aTotal = Object.entries(a.sectorDetails ?? {}).reduce((sum, [sector, details]) => {
-        const weights =
-          sector === 'ai'
-            ? defaultAISubsectorWeights
-            : sector === 'quantum'
-              ? defaultQuantumSubsectorWeights
-              : sector === 'semiconductors'
-                ? defaultSemiconductorsSubsectorWeights
-                : sector === 'biotech'
-                  ? defaultBiotechSubsectorWeights
-                  : defaultSpaceSubsectorWeights;
-
-        const sectorScore = calculateSectorScore(details, weights);
-        return sum + sectorScore * (sectorWeights[sector] ?? 0);
-      }, 0);
-
-      const bTotal = Object.entries(b.sectorDetails ?? {}).reduce((sum, [sector, details]) => {
-        const weights =
-          sector === 'ai'
-            ? defaultAISubsectorWeights
-            : sector === 'quantum'
-              ? defaultQuantumSubsectorWeights
-              : sector === 'semiconductors'
-                ? defaultSemiconductorsSubsectorWeights
-                : sector === 'biotech'
-                  ? defaultBiotechSubsectorWeights
-                  : defaultSpaceSubsectorWeights;
-
-        const sectorScore = calculateSectorScore(details, weights);
-        return sum + sectorScore * (sectorWeights[sector] ?? 0);
-      }, 0);
-
+    // Sort data by total score
+    const sortedData = [...chartData].sort((a, b) => {
+      const aTotal = viewState.type === 'sector'
+        ? Object.keys(a).reduce((sum, key) => key !== 'country' ? sum + (a[key] as number) : sum, 0)
+        : a.total;
+      const bTotal = viewState.type === 'sector'
+        ? Object.keys(b).reduce((sum, key) => key !== 'country' ? sum + (b[key] as number) : sum, 0)
+        : b.total;
       return bTotal - aTotal;
     });
 
-    // Get data keys based on view state
-    const keys =
-      viewState.type === 'sector' && viewState.sector && sortedData[0]?.sectorDetails?.[viewState.sector]
-        ? Object.keys(sortedData[0].sectorDetails[viewState.sector])
-        : ['ai', 'quantum', 'semiconductors', 'biotech', 'space'];
-
-    // Prepare data for stacking
-    const stackData = d3
-      .stack<CountryData>()
-      .keys(keys)
-      .value((d, key) => {
-        if (viewState.type === 'sector' && viewState.sector && d.sectorDetails) {
-          const score = d.sectorDetails[viewState.sector]?.[key] ?? 0;
-          const weights =
-            viewState.sector === 'space'
-              ? defaultSpaceSubsectorWeights
-              : viewState.sector === 'biotech'
-                ? defaultBiotechSubsectorWeights
-                : viewState.sector === 'ai'
-                  ? defaultAISubsectorWeights
-                  : viewState.sector === 'quantum'
-                    ? defaultQuantumSubsectorWeights
-                    : defaultSemiconductorsSubsectorWeights;
-          return calculateSubsectorScore(score, weights[key as keyof typeof weights] ?? 0);
-        }
-
-        // For main view, calculate sector scores from subsector details with weights
-        const subsectorData = d.sectorDetails?.[key] ?? {};
-        const weights =
-          key === 'space'
-            ? defaultSpaceSubsectorWeights
-            : key === 'biotech'
-              ? defaultBiotechSubsectorWeights
-              : key === 'ai'
-                ? defaultAISubsectorWeights
-                : key === 'quantum'
-                  ? defaultQuantumSubsectorWeights
-                  : defaultSemiconductorsSubsectorWeights;
-
-        const sectorScore = calculateSectorScore(subsectorData, weights);
-        return viewState.type === 'main' ? sectorScore * (sectorWeights[key] ?? 0) : sectorScore;
-      })(sortedData);
-
     const svg = d3.select(svgRef.current);
-
-    // Only clear if no previous elements exist
+    
+    // Clear if no previous elements exist
     if (svg.select('g').empty()) {
       svg.selectAll('*').remove();
       svg.append('g').attr('transform', `translate(${margin.left},${margin.top})`);
@@ -191,16 +210,19 @@ const BarChart: React.FC<Props> = ({
     // Create scales
     const x = d3
       .scaleBand()
-      .domain(sortedData.map((d) => d.country))
+      .domain(sortedData.map(d => d.country))
       .range([0, innerWidth])
       .padding(0.2);
 
-    // Ensure stackData is not empty before calculating max
-    const yMax = stackData.length > 0 ? d3.max(stackData[stackData.length - 1], (d) => d[1]) || 0 : 0;
+    const stackGen = d3.stack<Record<string, any>>().keys(keys);
+    const layers = stackGen(sortedData);
 
-    const y = d3.scaleLinear().domain([0, yMax]).range([innerHeight, 0]);
+    const y = d3
+      .scaleLinear()
+      .domain([0, d3.max(layers[layers.length - 1], d => d[1]) || 0])
+      .range([innerHeight, 0]);
 
-    // Update axes with transitions
+    // Update axes
     const xAxis = g.select('.x-axis');
     if (xAxis.empty()) {
       g.append('g')
@@ -250,12 +272,13 @@ const BarChart: React.FC<Props> = ({
         .style('font-weight', '500');
     }
 
-    // Style the axis lines and ticks
-    svg.selectAll('.domain, .tick line').style('stroke', '#cbd5e0').style('stroke-width', '1px');
+    // Style axis lines and ticks
+    svg.selectAll('.domain, .tick line')
+      .style('stroke', '#cbd5e0')
+      .style('stroke-width', '1px');
 
     // Create tooltip
-    const tooltip = d3
-      .select(tooltipRef.current)
+    const tooltip = d3.select(tooltipRef.current)
       .style('position', 'absolute')
       .style('visibility', 'hidden')
       .style('background-color', 'white')
@@ -269,321 +292,187 @@ const BarChart: React.FC<Props> = ({
       .style('z-index', '1000')
       .style('min-width', '220px');
 
-    // Update stacked bars with transitions
-    const layers = g.selectAll('g.layer').data(stackData);
+    // Update stacked bars
+    const layerGroups = g.selectAll('g.layer').data(layers);
+    layerGroups.exit().remove();
 
-    layers.exit().remove();
+    const layerGroupsEnter = layerGroups.enter()
+      .append('g')
+      .attr('class', 'layer');
 
-    const layersEnter = layers.enter().append('g').attr('class', 'layer');
-
-    const layersMerge = layers.merge(layersEnter).style('fill', (d, i) => {
-      if (viewState.type === 'sector' && viewState.sector) {
-        if (viewState.sector === 'space') {
-          return spaceSubsectorColors[keys[i] as keyof typeof spaceSubsectorColors];
-        } else if (viewState.sector === 'biotech') {
-          return biotechSubsectorColors[keys[i] as keyof typeof biotechSubsectorColors];
-        } else if (viewState.sector === 'ai') {
-          return aiSubsectorColors[keys[i] as keyof typeof aiSubsectorColors];
-        } else if (viewState.sector === 'quantum') {
-          return quantumSubsectorColors[keys[i] as keyof typeof quantumSubsectorColors];
-        } else if (viewState.sector === 'semiconductors') {
-          return semiconductorsSubsectorColors[keys[i] as keyof typeof semiconductorsSubsectorColors];
-        } else {
-          const baseColor = sectorColors[viewState.sector];
-          return d3.color(baseColor)!.brighter(i / keys.length).toString();
+    const layerGroupsMerge = layerGroups.merge(layerGroupsEnter)
+      .style('fill', (d, i) => {
+        if (viewState.type === 'sector') {
+          if (viewState.sector === 'ai') return aiSubsectorColors[keys[i]];
+          if (viewState.sector === 'quantum') return quantumSubsectorColors[keys[i]];
+          if (viewState.sector === 'semiconductors') return semiconductorsSubsectorColors[keys[i]];
+          if (viewState.sector === 'biotech') return biotechSubsectorColors[keys[i]];
+          if (viewState.sector === 'space') return spaceSubsectorColors[keys[i]];
         }
-      }
-      return sectorColors[keys[i]];
-    });
+        return sectorColors[keys[i]];
+      });
 
-    const normalWidth = x.bandwidth();
-    const selectedWidth = normalWidth * 1.1;
-    const normalHeight = (d: any) => y(d[0]) - y(d[1]);
-    const selectedHeight = (d: any) => normalHeight(d) * 1.1;
-
-    const rects = layersMerge.selectAll('rect').data((d) => d);
+    // Update rectangles
+    const rects = layerGroupsMerge.selectAll('rect')
+      .data(d => d);
 
     rects.exit().remove();
 
-    const rectsEnter = rects
-      .enter()
+    const rectsEnter = rects.enter()
       .append('rect')
-      .attr('x', (d) => x(d.data.country) || 0)
+      .attr('x', d => x(d.data.country) || 0)
       .attr('y', innerHeight)
       .attr('height', 0)
-      .attr('width', normalWidth);
+      .attr('width', x.bandwidth());
 
-    rects
-      .merge(rectsEnter)
+    const normalWidth = x.bandwidth();
+    const selectedWidth = normalWidth * 1.1;
+
+    rects.merge(rectsEnter)
       .transition()
       .duration(750)
-      .ease(d3.easeQuadOut)
-      .attr('x', (d) => {
+      .attr('x', d => {
         const xPos = x(d.data.country) || 0;
-        const isSelected = selectedCountries.includes(d.data.country);
-        if (isSelected) {
-          return xPos - (selectedWidth - normalWidth) / 2;
-        }
-        return xPos;
+        return selectedCountries.includes(d.data.country)
+          ? xPos - (selectedWidth - normalWidth) / 2
+          : xPos;
       })
-      .attr('y', (d) => {
-        const yPos = y(d[1]);
-        const isSelected = selectedCountries.includes(d.data.country);
-        if (isSelected) {
-          return yPos - (selectedHeight(d) - normalHeight(d));
-        }
-        return yPos;
-      })
-      .attr('height', (d) => {
-        const isSelected = selectedCountries.includes(d.data.country);
-        return isSelected ? selectedHeight(d) : normalHeight(d);
-      })
-      .attr('width', (d) => (selectedCountries.includes(d.data.country) ? selectedWidth : normalWidth))
+      .attr('y', d => y(d[1]))
+      .attr('height', d => y(d[0]) - y(d[1]))
+      .attr('width', d => selectedCountries.includes(d.data.country) ? selectedWidth : normalWidth)
       .style('opacity', (d, i, nodes) => {
-        const currentKey = keys[d3.select(nodes[i].parentNode).datum().index];
+        const key = keys[d3.select(nodes[i].parentNode).datum().index];
         if (selectedCountries.length && !selectedCountries.includes(d.data.country)) return 0.3;
-        if (selectedSector && currentKey !== selectedSector) return 0.3;
+        if (selectedSector && key !== selectedSector) return 0.3;
         return 1;
-      })
-      .style('stroke', (d) => (selectedCountries.includes(d.data.country) ? '#1A202C' : 'none'))
-      .style('stroke-width', (d) => (selectedCountries.includes(d.data.country) ? '1px' : '0'))
-      .style('filter', (d) =>
-        selectedCountries.includes(d.data.country)
-          ? 'drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1))'
-          : 'none',
-      );
+      });
 
     // Add interactivity
-    layersMerge
-      .selectAll('rect')
+    layerGroupsMerge.selectAll('rect')
       .style('cursor', 'pointer')
       .on('click', (event, d) => {
         const country = d.data.country;
-        if (selectedCountries.includes(country)) {
-          onCountrySelect(selectedCountries.filter((c) => c !== country));
-        } else {
-          onCountrySelect([...selectedCountries, country]);
-        }
+        onCountrySelect(
+          selectedCountries.includes(country)
+            ? selectedCountries.filter(c => c !== country)
+            : [...selectedCountries, country]
+        );
       })
       .on('mouseover', (event, d) => {
-        const hoveredKey = keys[d3.select(event.currentTarget.parentNode).datum().index];
-
-        let tooltipContent = `
-          <div style="font-weight: 700; margin-bottom: 8px; color: #1A202C; font-size: 16px; border-bottom: 1px solid #E2E8F0; padding-bottom: 6px;">
-            ${d.data.country}
-          </div>
-          <div style="margin-bottom: 8px;">
-        `;
-
-        if (viewState.type === 'sector' && viewState.sector && d.data.sectorDetails) {
-          // Show subsector scores
-          const weights =
-            viewState.sector === 'space'
-              ? defaultSpaceSubsectorWeights
-              : viewState.sector === 'biotech'
-                ? defaultBiotechSubsectorWeights
-                : viewState.sector === 'ai'
-                  ? defaultAISubsectorWeights
-                  : viewState.sector === 'quantum'
-                    ? defaultQuantumSubsectorWeights
-                    : defaultSemiconductorsSubsectorWeights;
-
-          Object.entries(d.data.sectorDetails[viewState.sector] ?? {}).forEach(([key, score]) => {
-            const weightedScore = calculateSubsectorScore(
-              score as number,
-              weights[key as keyof typeof weights] ?? 0,
-            );
-
-            const color =
-              viewState.sector === 'space'
-                ? spaceSubsectorColors[key as keyof typeof spaceSubsectorColors]
-                : viewState.sector === 'biotech'
-                  ? biotechSubsectorColors[key as keyof typeof biotechSubsectorColors]
-                  : viewState.sector === 'ai'
-                    ? aiSubsectorColors[key as keyof typeof aiSubsectorColors]
-                    : viewState.sector === 'quantum'
-                      ? quantumSubsectorColors[key as keyof typeof quantumSubsectorColors]
-                      : d3
-                          .color(sectorColors[viewState.sector])!
-                          .brighter(keys.indexOf(key) / keys.length);
-
-            tooltipContent += `
-              <div style="
-                display: flex; 
-                align-items: center; 
-                margin-bottom: 6px;
-                padding: 4px;
-                background-color: ${key === hoveredKey ? '#f7fafc' : 'transparent'};
-                border-radius: 4px;
-                ${key === hoveredKey ? 'font-weight: 600;' : ''}
-              ">
-                <div style="
-                  width: 12px; 
-                  height: 12px; 
-                  background-color: ${color}; 
-                  margin-right: 8px; 
-                  border-radius: 2px;
-                "></div>
-                <div style="flex-grow: 1; color: ${key === hoveredKey ? '#2D3748' : '#4A5568'};">
-                  ${subsectorDefinitions[viewState.sector][key]}
-                </div>
-                <div style="color: ${key === hoveredKey ? '#2D3748' : '#718096'};">
-                  ${weightedScore.toFixed(3)}
-                </div>
-              </div>
-            `;
-          });
-        } else {
-          // Show sector scores with weights applied
-          Object.entries(d.data.sectorDetails ?? {}).forEach(([sector, subsectorData]) => {
-            const weights =
-              sector === 'space'
-                ? defaultSpaceSubsectorWeights
-                : sector === 'biotech'
-                  ? defaultBiotechSubsectorWeights
-                  : sector === 'ai'
-                    ? defaultAISubsectorWeights
-                    : sector === 'quantum'
-                      ? defaultQuantumSubsectorWeights
-                      : defaultSemiconductorsSubsectorWeights;
-
-            const sectorScore = calculateSectorScore(subsectorData, weights);
-            const weightedScore = viewState.type === 'main' ? sectorScore * (sectorWeights[sector] ?? 0) : sectorScore;
-
-            tooltipContent += `
-              <div style="
-                display: flex; 
-                align-items: center; 
-                margin-bottom: 6px;
-                padding: 4px;
-                background-color: ${sector === hoveredKey ? '#f7fafc' : 'transparent'};
-                border-radius: 4px;
-                ${sector === hoveredKey ? 'font-weight: 600;' : ''}
-              ">
-                <div style="
-                  width: 12px; 
-                  height: 12px; 
-                  background-color: ${sectorColors[sector]}; 
-                  margin-right: 8px; 
-                  border-radius: 2px;
-                "></div>
-                <div style="flex-grow: 1; color: ${sector === hoveredKey ? '#2D3748' : '#4A5568'};">
-                  ${sector.toUpperCase()}
-                </div>
-                <div style="color: ${sector === hoveredKey ? '#2D3748' : '#718096'};">
-                  ${weightedScore.toFixed(3)}
-                </div>
-              </div>
-            `;
-          });
-        }
-
-        // Calculate total score with weights
-        const totalScore =
-          viewState.type === 'sector' && viewState.sector
-            ? calculateSectorScore(
-                d.data.sectorDetails?.[viewState.sector] ?? {},
-                viewState.sector === 'space'
-                  ? defaultSpaceSubsectorWeights
-                  : viewState.sector === 'biotech'
-                    ? defaultBiotechSubsectorWeights
-                    : viewState.sector === 'ai'
-                      ? defaultAISubsectorWeights
-                      : viewState.sector === 'quantum'
-                        ? defaultQuantumSubsectorWeights
-                        : defaultSemiconductorsSubsectorWeights,
-              )
-            : Object.entries(d.data.sectorDetails ?? {}).reduce((sum, [sector, details]) => {
-                const weights =
-                  sector === 'space'
-                    ? defaultSpaceSubsectorWeights
-                    : sector === 'biotech'
-                      ? defaultBiotechSubsectorWeights
-                      : sector === 'ai'
-                        ? defaultAISubsectorWeights
-                        : sector === 'quantum'
-                          ? defaultQuantumSubsectorWeights
-                          : defaultSemiconductorsSubsectorWeights;
-
-                const sectorScore = calculateSectorScore(details, weights);
-                return sum + (viewState.type === 'main' ? sectorScore * (sectorWeights[sector] ?? 0) : sectorScore);
-              }, 0);
-
-        tooltipContent += `
-          </div>
-          <div style="font-weight: 600; color: #2D3748; border-top: 1px solid #E2E8F0; padding-top: 6px;">
-            Total Score: ${totalScore.toFixed(3)}
-          </div>
-        `;
-
-        tooltip.html(tooltipContent);
-        tooltip.style('visibility', 'visible');
-
-        const isSelected = selectedCountries.includes(d.data.country);
-        const rect = d3.select(event.currentTarget);
-        const currentWidth = isSelected ? selectedWidth : normalWidth;
-        const currentHeight = isSelected ? selectedHeight(d) : normalHeight(d);
-
-        rect
-          .transition()
-          .duration(200)
-          .attr('x', x(d.data.country)! - (selectedWidth - normalWidth) / 2)
-          .attr('width', selectedWidth)
-          .attr('y', y(d[1]) - (selectedHeight(d) - normalHeight(d)))
-          .attr('height', selectedHeight(d))
-          .style('opacity', 1)
-          .style('stroke', '#1A202C')
-          .style('stroke-width', '1px')
-          .style('filter', 'drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1))');
-      })
-      .on('mousemove', (event) => {
-        const containerRect = containerRef.current!.getBoundingClientRect();
-        const svgRect = svgRef.current!.getBoundingClientRect();
-        const tooltipNode = tooltipRef.current!;
-
-        const xPos = event.clientX - svgRect.left;
-        const yPos = event.clientY - svgRect.top;
-
-        let left = xPos + margin.left + 16;
-        let top = yPos;
-
-        if (left + tooltipNode.offsetWidth > containerRect.width) {
-          left = xPos - tooltipNode.offsetWidth - 16;
-        }
-
-        if (top + tooltipNode.offsetHeight > containerRect.height) {
-          top = containerRect.height - tooltipNode.offsetHeight - 8;
-        }
-        if (top < 0) {
-          top = 8;
-        }
-
-        tooltip.style('left', `${left}px`).style('top', `${top}px`);
-      })
-      .on('mouseout', (event) => {
-        tooltip.style('visibility', 'hidden');
-
-        const currentKey = keys[d3.select(event.currentTarget.parentNode).datum().index];
-        const d = event.target.__data__;
-        const isSelected = selectedCountries.includes(d.data.country);
+        const tooltipContent = generateTooltipContent(d, viewState, keys);
+        tooltip.html(tooltipContent).style('visibility', 'visible');
 
         d3.select(event.currentTarget)
           .transition()
           .duration(200)
-          .attr('x', x(d.data.country)!)
-          .attr('width', isSelected ? selectedWidth : normalWidth)
-          .attr('y', y(d[1]))
-          .attr('height', isSelected ? selectedHeight(d) : normalHeight(d))
-          .style('opacity', () => {
+          .attr('x', x(d.data.country)! - (selectedWidth - normalWidth) / 2)
+          .attr('width', selectedWidth)
+          .style('opacity', 1)
+          .style('filter', 'drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1))');
+      })
+      .on('mousemove', (event) => {
+        const [mouseX, mouseY] = d3.pointer(event, document.body);
+        tooltip
+          .style('left', `${mouseX + 16}px`)
+          .style('top', `${mouseY}px`);
+      })
+      .on('mouseout', (event, d) => {
+        tooltip.style('visibility', 'hidden');
+
+        d3.select(event.currentTarget)
+          .transition()
+          .duration(200)
+          .attr('x', x(d.data.country))
+          .attr('width', normalWidth)
+          .style('opacity', (d, i, nodes) => {
+            const key = keys[d3.select(nodes[i].parentNode).datum().index];
             if (selectedCountries.length && !selectedCountries.includes(d.data.country)) return 0.3;
-            if (selectedSector && currentKey !== selectedSector) return 0.3;
+            if (selectedSector && key !== selectedSector) return 0.3;
             return 1;
           })
-          .style('stroke', isSelected ? '#1A202C' : 'none')
-          .style('stroke-width', isSelected ? '1px' : '0')
-          .style('filter', isSelected ? 'drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1))' : 'none');
+          .style('filter', 'none');
       });
-  }, [data, selectedSector, selectedCountries, onCountrySelect, viewState, sectorWeights]);
+  }, [
+    data,
+    selectedSector,
+    selectedCountries,
+    onCountrySelect,
+    viewState,
+    sectorWeights,
+    aiChartData,
+    quantumChartData,
+    semiconductorsChartData,
+    biotechChartData,
+    spaceChartData,
+    mainChartData
+  ]);
+
+  const generateTooltipContent = (d: any, viewState: ViewState, keys: string[]) => {
+    const data = d.data;
+    
+    let content = `
+      <div style="font-weight: 700; margin-bottom: 8px; color: #1A202C; font-size: 16px; border-bottom: 1px solid #E2E8F0; padding-bottom: 6px;">
+        ${data.country}
+      </div>
+      <div style="margin-bottom: 8px;">
+    `;
+
+    keys.forEach(key => {
+      const value = data[key];
+      const color = viewState.type === 'sector'
+        ? viewState.sector === 'ai'
+          ? aiSubsectorColors[key]
+          : viewState.sector === 'quantum'
+            ? quantumSubsectorColors[key]
+            : viewState.sector === 'semiconductors'
+              ? semiconductorsSubsectorColors[key]
+              : viewState.sector === 'biotech'
+                ? biotechSubsectorColors[key]
+                : spaceSubsectorColors[key]
+        : sectorColors[key];
+
+      const label = viewState.type === 'sector'
+        ? subsectorDefinitions[viewState.sector!][key]
+        : key.toUpperCase();
+
+      content += `
+        <div style="
+          display: flex; 
+          align-items: center; 
+          margin-bottom: 6px;
+          padding: 4px;
+          border-radius: 4px;
+        ">
+          <div style="
+            width: 12px; 
+            height: 12px; 
+            background-color: ${color}; 
+            margin-right: 8px; 
+            border-radius: 2px;
+          "></div>
+          <div style="flex-grow: 1; color: #4A5568;">
+            ${label}
+          </div>
+          <div style="color: #2D3748; font-weight: 500;">
+            ${value.toFixed(3)}
+          </div>
+        </div>
+      `;
+    });
+
+    const total = Object.entries(data)
+      .reduce((sum, [key, value]) => 
+        key !== 'country' && typeof value === 'number' ? sum + value : sum, 0);
+
+    content += `
+      </div>
+      <div style="font-weight: 600; color: #2D3748; border-top: 1px solid #E2E8F0; padding-top: 6px;">
+        Total Score: ${total.toFixed(3)}
+      </div>
+    `;
+
+    return content;
+  };
 
   return (
     <div ref={containerRef} className="relative">
