@@ -1,13 +1,13 @@
 import type { Sector } from '@/sectors/sectorDef';
 
 const DEFAULT_SECTOR_WEIGHTS = {
-  ai: 0.2,
+  ai: 0.25,
   biotech: 0.2,
-  semiconductors: 0.2,
-  space: 0.2,
-  quantum: 0.2,
+  semiconductors: 0.35,
+  space: 0.15,
+  quantum: 0.05,
 } as const satisfies Record<Sector, number>;
 
-export function getDefaultSectorWeight(sector: Sector): number {
-  return DEFAULT_SECTOR_WEIGHTS[sector];
+export function getSectorWeights() {
+  return structuredClone(DEFAULT_SECTOR_WEIGHTS);
 }

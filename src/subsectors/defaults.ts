@@ -67,54 +67,54 @@ const SPACE_DEFAULT_SUBSECTOR_WEIGHTS = {
   security: 0.15,
 } as const satisfies Record<SpaceSubsectors, number>;
 
-export function getAiSubsectorWeight(subsector: AISubsectors): number {
-  return structuredClone(AI_DEFAULT_SUBSECTOR_WEIGHTS[subsector]);
+export function getAISectorWeights() {
+  return structuredClone(AI_DEFAULT_SUBSECTOR_WEIGHTS);
 }
 
-export function getQuantumSubsectorWeight(subsector: QuantumSubsectors): number {
-  return structuredClone(QUANTUM_DEFAULT_SUBSECTOR_WEIGHTS[subsector]);
+export function getQuantumSectorWeights() {
+  return structuredClone(QUANTUM_DEFAULT_SUBSECTOR_WEIGHTS);
 }
 
-export function getSemiconductorsSubsectorWeight(subsector: SemiconductorsSubsectors): number {
-  return structuredClone(SEMICONDUCTORS_DEFAULT_SUBSECTOR_WEIGHTS[subsector]);
+export function getSemiconductorsSectorWeights() {
+  return structuredClone(SEMICONDUCTORS_DEFAULT_SUBSECTOR_WEIGHTS);
 }
 
-export function getBiotechSubsectorWeight(subsector: BiotechnologySubsectors): number {
-  return structuredClone(BIOTECH_DEFAULT_SUBSECTOR_WEIGHTS[subsector]);
+export function getBiotechSectorWeights() {
+  return structuredClone(BIOTECH_DEFAULT_SUBSECTOR_WEIGHTS);
 }
 
-export function getSpaceSubsectorWeight(subsector: SpaceSubsectors): number {
-  return structuredClone(SPACE_DEFAULT_SUBSECTOR_WEIGHTS[subsector]);
+export function getSpaceSectorWeights() {
+  return structuredClone(SPACE_DEFAULT_SUBSECTOR_WEIGHTS);
 }
 
-export function getSubsectorWeight(sector: Sector, subsector: string): number {
-  switch (sector) {
-    case 'ai':
-      if (getSubsectorList('ai').includes(subsector)) {
-        return getAiSubsectorWeight(subsector as AISubsectors);
-      }
-      throw new Error(`Invalid AI subsector: ${subsector}`);
-    case 'quantum':
-      if (getSubsectorList('quantum').includes(subsector)) {
-        return getQuantumSubsectorWeight(subsector as QuantumSubsectors);
-      }
-      throw new Error(`Invalid quantum subsector: ${subsector}`);
-    case 'semiconductors':
-      if (getSubsectorList('semiconductors').includes(subsector)) {
-        return getSemiconductorsSubsectorWeight(subsector as SemiconductorsSubsectors);
-      }
-      throw new Error(`Invalid semiconductors subsector: ${subsector}`);
-    case 'biotech':
-      if (getSubsectorList('biotech').includes(subsector)) {
-        return getBiotechSubsectorWeight(subsector as BiotechnologySubsectors);
-      }
-      throw new Error(`Invalid biotech subsector: ${subsector}`);
-    case 'space':
-      if (getSubsectorList('space').includes(subsector)) {
-        return getSpaceSubsectorWeight(subsector as SpaceSubsectors);
-      }
-      throw new Error(`Invalid space subsector: ${subsector}`);
-    default:
-      throw new Error(`Invalid sector: ${sector}`);
-  }
-}
+// export function getSubsectorWeight(sector: Sector, subsector: string): number {
+//   switch (sector) {
+//     case 'ai':
+//       if (getSubsectorList('ai').includes(subsector)) {
+//         return getAISectorWeights()[subsector as AISubsectors];
+//       }
+//       throw new Error(`Invalid AI subsector: ${subsector}`);
+//     case 'quantum':
+//       if (getSubsectorList('quantum').includes(subsector)) {
+//         return getQuantumSubsectorWeight(subsector as QuantumSubsectors);
+//       }
+//       throw new Error(`Invalid quantum subsector: ${subsector}`);
+//     case 'semiconductors':
+//       if (getSubsectorList('semiconductors').includes(subsector)) {
+//         return getSemiconductorsSubsectorWeight(subsector as SemiconductorsSubsectors);
+//       }
+//       throw new Error(`Invalid semiconductors subsector: ${subsector}`);
+//     case 'biotech':
+//       if (getSubsectorList('biotech').includes(subsector)) {
+//         return getBiotechSubsectorWeight(subsector as BiotechnologySubsectors);
+//       }
+//       throw new Error(`Invalid biotech subsector: ${subsector}`);
+//     case 'space':
+//       if (getSubsectorList('space').includes(subsector)) {
+//         return getSpaceSubsectorWeight(subsector as SpaceSubsectors);
+//       }
+//       throw new Error(`Invalid space subsector: ${subsector}`);
+//     default:
+//       throw new Error(`Invalid sector: ${sector}`);
+//   }
+// }

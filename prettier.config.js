@@ -5,10 +5,13 @@
 const config = {
   semi: true,
   singleQuote: true,
-  trailingComma: "all",
+  trailingComma: 'all',
   printWidth: 100,
   tabWidth: 2,
   useTabs: false,
+  plugins: ['prettier-plugin-tailwindcss'],
+  tailwindStylesheet: './src/index.css',
+  tailwindFunctions: ['clsx', 'cva'],
 };
 
 export default config;
