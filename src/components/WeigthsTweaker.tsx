@@ -1,11 +1,8 @@
+import { getPercentage } from '@/utils/display';
 import { cn } from '@/utils/styling';
 import { useMemo } from 'react';
 
 type AllocationType = 'perfect' | 'under' | 'over';
-
-function getPercentage(weight: number) {
-  return +(weight * 100).toFixed(1);
-}
 
 function getAllocationType(totalPercentage: number): AllocationType {
   if (Math.abs(totalPercentage - 100) < Number.EPSILON) {

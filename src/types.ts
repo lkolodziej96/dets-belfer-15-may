@@ -62,3 +62,18 @@ export interface QuantumSectorData {
   quantum_communications: number;
   quantum_computing: number;
 }
+
+export type WeightedSubSectorCountryData = {
+  country: string;
+  sectors: Record<string, Record<string, number>>;
+};
+
+export type TotalSectorScoresCountryData = {
+  country: string;
+  sectors: Record<string, number>;
+};
+
+export type TotalCountryScoreData = {
+  country: string;
+  score: number;
+};

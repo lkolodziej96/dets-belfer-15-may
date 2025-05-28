@@ -6,7 +6,6 @@ import WorldMap from './components/WorldMap';
 import BarChart from './components/BarChart';
 import PieChart from './components/PieChart';
 import DataTable from './components/DataTable';
-import SectorWeights from './components/SectorWeights';
 import SectorNav from './components/SectorNav';
 
 import {
@@ -18,7 +17,14 @@ import {
   biotechColumns,
   spaceColumns,
 } from './data/mainData';
-import type { CountryData, SectorWeights as SectorWeightsType, ViewState } from './types';
+import type {
+  CountryData,
+  SectorWeights as SectorWeightsType,
+  TotalCountryScoreData,
+  TotalSectorScoresCountryData,
+  ViewState,
+  WeightedSubSectorCountryData,
+} from './types';
 import type { Sector } from '@/sectors/sectorDef';
 import { getSectorWeights } from '@/sectors/defaults';
 import type {
@@ -90,7 +96,7 @@ console.log(mainData);
 export default function App() {
   const [selectedSector, setSelectedSector] = useState<Sector | null>(null);
   const [weights, setWeights] = useImmer<Weights>(getDefaultWeights);
-  const weightedSubSectorDataPerCountry = useMemo(
+  const weightedSubSectorDataPerCountry: WeightedSubSectorCountryData[] = useMemo(
     () =>
       mainData.map(({ country, sectorDetails }) => {
         return {
@@ -118,7 +124,7 @@ export default function App() {
 
   debug('weightedSubSectorDataPerCountry')(weightedSubSectorDataPerCountry);
 
-  const totalSectorScoresPerCountry = useMemo(() => {
+  const totalSectorScoresPerCountry: TotalSectorScoresCountryData[] = useMemo(() => {
     return weightedSubSectorDataPerCountry.map(({ country, sectors }) => {
       return {
         country,
@@ -127,7 +133,7 @@ export default function App() {
             const sector = _sector as Sector;
             const sectorScore = Object.values(subsectorData).reduce((sum, score) => sum + score, 0);
 
-            acc[sector] = sectorScore;
+            acc[sector] = sectorScore * weights.overall[sector];
             return acc;
           },
           {} as Record<Sector, number>,
@@ -138,14 +144,12 @@ export default function App() {
 
   debug('totalSectorScoresPerCountry')(totalSectorScoresPerCountry);
 
-  const totalCountryScores = useMemo(() => {
+  const totalCountryScores: TotalCountryScoreData[] = useMemo(() => {
     return totalSectorScoresPerCountry.map(({ country, sectors }) => {
       return {
         country,
-        score: Object.entries(sectors).reduce((sum, [_sector, sectorToal]) => {
-          const sector = _sector as Sector;
-          const sectorWeight = weights.overall[sector];
-          return sum + sectorToal * sectorWeight;
+        score: Object.entries(sectors).reduce((sum, [, sectorToal]) => {
+          return sum + sectorToal;
         }, 0),
       };
     });
@@ -274,14 +278,14 @@ export default function App() {
           <div className="w-[760px] space-y-8">
             {/* Bar Chart */}
             <div className="rounded-xl border border-gray-100 bg-white p-8 shadow-lg">
-              {/* <BarChart
-                data={data}
+              <BarChart
                 selectedSector={selectedSector}
                 selectedCountries={selectedCountries}
                 onCountrySelect={handleCountrySelect}
-                viewState={viewState}
-                sectorWeights={sectorWeights}
-              /> */}
+                weightedSubSectorDataPerCountry={weightedSubSectorDataPerCountry}
+                totalSectorScoresPerCountry={totalSectorScoresPerCountry}
+                totalCountryScores={totalCountryScores}
+              />
             </div>
 
             {/* World Map and Pie Chart */}
