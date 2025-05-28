@@ -54,20 +54,21 @@ const BarChart: React.FC<Props> = ({
   const biotechKeys = Object.keys(defaultBiotechSubsectorWeights);
   const spaceKeys = Object.keys(defaultSpaceSubsectorWeights);
 
+  // Calculate raw sector scores first (without top-level weights)
   const aiChartData = useMemo(
     () =>
       data.map((d) => {
         const raw = d.sectorDetails?.ai ?? {};
-        const weighted: Record<string, number> = {};
+        let sectorTotal = 0;
 
         aiKeys.forEach((k) => {
-          weighted[k] = Number(((raw[k] ?? 0) * defaultAISubsectorWeights[k]).toFixed(15));
+          sectorTotal += (raw[k] ?? 0) * defaultAISubsectorWeights[k];
         });
 
         return {
           country: d.country,
-          ...weighted,
-          total: Number(aiKeys.reduce((sum, k) => sum + weighted[k], 0).toFixed(15)),
+          ai: Number(sectorTotal.toFixed(15)),
+          total: Number(sectorTotal.toFixed(15)),
         };
       }),
     [data, aiKeys],
@@ -77,16 +78,16 @@ const BarChart: React.FC<Props> = ({
     () =>
       data.map((d) => {
         const raw = d.sectorDetails?.quantum ?? {};
-        const weighted: Record<string, number> = {};
+        let sectorTotal = 0;
 
         quantumKeys.forEach((k) => {
-          weighted[k] = Number(((raw[k] ?? 0) * defaultQuantumSubsectorWeights[k]).toFixed(15));
+          sectorTotal += (raw[k] ?? 0) * defaultQuantumSubsectorWeights[k];
         });
 
         return {
           country: d.country,
-          ...weighted,
-          total: Number(quantumKeys.reduce((sum, k) => sum + weighted[k], 0).toFixed(15)),
+          quantum: Number(sectorTotal.toFixed(15)),
+          total: Number(sectorTotal.toFixed(15)),
         };
       }),
     [data, quantumKeys],
@@ -96,18 +97,16 @@ const BarChart: React.FC<Props> = ({
     () =>
       data.map((d) => {
         const raw = d.sectorDetails?.semiconductors ?? {};
-        const weighted: Record<string, number> = {};
+        let sectorTotal = 0;
 
         semiconductorsKeys.forEach((k) => {
-          weighted[k] = Number(
-            ((raw[k] ?? 0) * defaultSemiconductorsSubsectorWeights[k]).toFixed(15),
-          );
+          sectorTotal += (raw[k] ?? 0) * defaultSemiconductorsSubsectorWeights[k];
         });
 
         return {
           country: d.country,
-          ...weighted,
-          total: Number(semiconductorsKeys.reduce((sum, k) => sum + weighted[k], 0).toFixed(15)),
+          semiconductors: Number(sectorTotal.toFixed(15)),
+          total: Number(sectorTotal.toFixed(15)),
         };
       }),
     [data, semiconductorsKeys],
@@ -117,16 +116,16 @@ const BarChart: React.FC<Props> = ({
     () =>
       data.map((d) => {
         const raw = d.sectorDetails?.biotech ?? {};
-        const weighted: Record<string, number> = {};
+        let sectorTotal = 0;
 
         biotechKeys.forEach((k) => {
-          weighted[k] = Number(((raw[k] ?? 0) * defaultBiotechSubsectorWeights[k]).toFixed(15));
+          sectorTotal += (raw[k] ?? 0) * defaultBiotechSubsectorWeights[k];
         });
 
         return {
           country: d.country,
-          ...weighted,
-          total: Number(biotechKeys.reduce((sum, k) => sum + weighted[k], 0).toFixed(15)),
+          biotech: Number(sectorTotal.toFixed(15)),
+          total: Number(sectorTotal.toFixed(15)),
         };
       }),
     [data, biotechKeys],
@@ -136,42 +135,48 @@ const BarChart: React.FC<Props> = ({
     () =>
       data.map((d) => {
         const raw = d.sectorDetails?.space ?? {};
-        const weighted: Record<string, number> = {};
+        let sectorTotal = 0;
 
         spaceKeys.forEach((k) => {
-          weighted[k] = Number(((raw[k] ?? 0) * defaultSpaceSubsectorWeights[k]).toFixed(15));
+          sectorTotal += (raw[k] ?? 0) * defaultSpaceSubsectorWeights[k];
         });
 
         return {
           country: d.country,
-          ...weighted,
-          total: Number(spaceKeys.reduce((sum, k) => sum + weighted[k], 0).toFixed(15)),
+          space: Number(sectorTotal.toFixed(15)),
+          total: Number(sectorTotal.toFixed(15)),
         };
       }),
     [data, spaceKeys],
   );
 
+  // Now apply top-level sector weights
   const mainChartData = useMemo(
     () =>
       data.map((d) => {
-        const aiTotal = aiChartData.find((c) => c.country === d.country)?.total ?? 0;
-        const qtTotal = quantumChartData.find((c) => c.country === d.country)?.total ?? 0;
-        const scTotal = semiconductorsChartData.find((c) => c.country === d.country)?.total ?? 0;
-        const btTotal = biotechChartData.find((c) => c.country === d.country)?.total ?? 0;
-        const spTotal = spaceChartData.find((c) => c.country === d.country)?.total ?? 0;
+        const aiScore = aiChartData.find((c) => c.country === d.country)?.total ?? 0;
+        const quantumScore = quantumChartData.find((c) => c.country === d.country)?.total ?? 0;
+        const semiconductorsScore =
+          semiconductorsChartData.find((c) => c.country === d.country)?.total ?? 0;
+        const biotechScore = biotechChartData.find((c) => c.country === d.country)?.total ?? 0;
+        const spaceScore = spaceChartData.find((c) => c.country === d.country)?.total ?? 0;
 
-        const weighted: Record<string, number> = {
-          ai: Number((aiTotal * (sectorWeights.ai ?? 0)).toFixed(15)),
-          quantum: Number((qtTotal * (sectorWeights.quantum ?? 0)).toFixed(15)),
-          semiconductors: Number((scTotal * (sectorWeights.semiconductors ?? 0)).toFixed(15)),
-          biotech: Number((btTotal * (sectorWeights.biotech ?? 0)).toFixed(15)),
-          space: Number((spTotal * (sectorWeights.space ?? 0)).toFixed(15)),
+        const weighted = {
+          ai: Number((aiScore * (sectorWeights.ai ?? 0)).toFixed(15)),
+          quantum: Number((quantumScore * (sectorWeights.quantum ?? 0)).toFixed(15)),
+          semiconductors: Number((semiconductorsScore * (sectorWeights.semiconductors ?? 0)).toFixed(15)),
+          biotech: Number((biotechScore * (sectorWeights.biotech ?? 0)).toFixed(15)),
+          space: Number((spaceScore * (sectorWeights.space ?? 0)).toFixed(15)),
         };
+
+        const total = Number(
+          Object.values(weighted).reduce((sum, score) => sum + score, 0).toFixed(15),
+        );
 
         return {
           country: d.country,
           ...weighted,
-          total: Number(Object.values(weighted).reduce((sum, v) => sum + v, 0).toFixed(15)),
+          total,
         };
       }),
     [
