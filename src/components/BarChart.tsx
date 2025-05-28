@@ -43,26 +43,36 @@ const BarChart: React.FC<Props> = ({
   const tooltipRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Helper functions matching DataTable's calculations
+  // Debug log for initial data
+  console.log('Initial data for US:', data.find(d => d.country === 'United States'));
+  console.log('Sector weights:', sectorWeights);
+
   const calculateSubsectorScore = (value: number = 0, weight: number = 0): number => {
-    return Number((value * weight).toFixed(15));
+    const score = Number((value * weight).toFixed(15));
+    return score;
   };
 
   const calculateSectorScore = (
     sectorDetails: Record<string, number> = {},
     weights: Record<string, number>,
   ): number => {
-    return Number(
+    const score = Number(
       Object.entries(sectorDetails)
         .reduce((total, [key, value]) => {
           return total + calculateSubsectorScore(value, weights[key] ?? 0);
         }, 0)
         .toFixed(15),
     );
+    return score;
   };
 
-  // Calculate subsector scores for each sector view
   const aiChartData = useMemo(() => {
+    const data_us = data.find(d => d.country === 'United States');
+    if (data_us) {
+      console.log('US AI raw data:', data_us.sectorDetails?.ai);
+      console.log('AI weights:', defaultAISubsectorWeights);
+    }
+
     return data.map((d) => {
       const subsectorData = d.sectorDetails?.ai ?? {};
       const weighted: Record<string, number> = {};
@@ -73,6 +83,11 @@ const BarChart: React.FC<Props> = ({
 
       const total = calculateSectorScore(subsectorData, defaultAISubsectorWeights);
 
+      if (d.country === 'United States') {
+        console.log('US AI weighted data:', weighted);
+        console.log('US AI total:', total);
+      }
+
       return {
         country: d.country,
         ...weighted,
@@ -81,7 +96,14 @@ const BarChart: React.FC<Props> = ({
     });
   }, [data]);
 
+  // Similar debug logs for other sectors...
   const quantumChartData = useMemo(() => {
+    const data_us = data.find(d => d.country === 'United States');
+    if (data_us) {
+      console.log('US Quantum raw data:', data_us.sectorDetails?.quantum);
+      console.log('Quantum weights:', defaultQuantumSubsectorWeights);
+    }
+
     return data.map((d) => {
       const subsectorData = d.sectorDetails?.quantum ?? {};
       const weighted: Record<string, number> = {};
@@ -92,6 +114,11 @@ const BarChart: React.FC<Props> = ({
 
       const total = calculateSectorScore(subsectorData, defaultQuantumSubsectorWeights);
 
+      if (d.country === 'United States') {
+        console.log('US Quantum weighted data:', weighted);
+        console.log('US Quantum total:', total);
+      }
+
       return {
         country: d.country,
         ...weighted,
@@ -101,6 +128,12 @@ const BarChart: React.FC<Props> = ({
   }, [data]);
 
   const semiconductorsChartData = useMemo(() => {
+    const data_us = data.find(d => d.country === 'United States');
+    if (data_us) {
+      console.log('US Semiconductors raw data:', data_us.sectorDetails?.semiconductors);
+      console.log('Semiconductors weights:', defaultSemiconductorsSubsectorWeights);
+    }
+
     return data.map((d) => {
       const subsectorData = d.sectorDetails?.semiconductors ?? {};
       const weighted: Record<string, number> = {};
@@ -111,6 +144,11 @@ const BarChart: React.FC<Props> = ({
 
       const total = calculateSectorScore(subsectorData, defaultSemiconductorsSubsectorWeights);
 
+      if (d.country === 'United States') {
+        console.log('US Semiconductors weighted data:', weighted);
+        console.log('US Semiconductors total:', total);
+      }
+
       return {
         country: d.country,
         ...weighted,
@@ -120,6 +158,12 @@ const BarChart: React.FC<Props> = ({
   }, [data]);
 
   const biotechChartData = useMemo(() => {
+    const data_us = data.find(d => d.country === 'United States');
+    if (data_us) {
+      console.log('US Biotech raw data:', data_us.sectorDetails?.biotech);
+      console.log('Biotech weights:', defaultBiotechSubsectorWeights);
+    }
+
     return data.map((d) => {
       const subsectorData = d.sectorDetails?.biotech ?? {};
       const weighted: Record<string, number> = {};
@@ -130,6 +174,11 @@ const BarChart: React.FC<Props> = ({
 
       const total = calculateSectorScore(subsectorData, defaultBiotechSubsectorWeights);
 
+      if (d.country === 'United States') {
+        console.log('US Biotech weighted data:', weighted);
+        console.log('US Biotech total:', total);
+      }
+
       return {
         country: d.country,
         ...weighted,
@@ -139,6 +188,12 @@ const BarChart: React.FC<Props> = ({
   }, [data]);
 
   const spaceChartData = useMemo(() => {
+    const data_us = data.find(d => d.country === 'United States');
+    if (data_us) {
+      console.log('US Space raw data:', data_us.sectorDetails?.space);
+      console.log('Space weights:', defaultSpaceSubsectorWeights);
+    }
+
     return data.map((d) => {
       const subsectorData = d.sectorDetails?.space ?? {};
       const weighted: Record<string, number> = {};
@@ -149,6 +204,11 @@ const BarChart: React.FC<Props> = ({
 
       const total = calculateSectorScore(subsectorData, defaultSpaceSubsectorWeights);
 
+      if (d.country === 'United States') {
+        console.log('US Space weighted data:', weighted);
+        console.log('US Space total:', total);
+      }
+
       return {
         country: d.country,
         ...weighted,
@@ -157,8 +217,18 @@ const BarChart: React.FC<Props> = ({
     });
   }, [data]);
 
-  // Calculate overview data with top-level sector weights
   const mainChartData = useMemo(() => {
+    const us_data = data.find(d => d.country === 'United States');
+    if (us_data) {
+      console.log('US data for main chart calculation:', {
+        ai: aiChartData.find(c => c.country === 'United States')?.total,
+        quantum: quantumChartData.find(c => c.country === 'United States')?.total,
+        semiconductors: semiconductorsChartData.find(c => c.country === 'United States')?.total,
+        biotech: biotechChartData.find(c => c.country === 'United States')?.total,
+        space: spaceChartData.find(c => c.country === 'United States')?.total,
+      });
+    }
+
     return data.map((d) => {
       const sectorTotals = {
         ai: aiChartData.find((c) => c.country === d.country)?.total ?? 0,
@@ -185,6 +255,11 @@ const BarChart: React.FC<Props> = ({
           .toFixed(15),
       );
 
+      if (d.country === 'United States') {
+        console.log('US final weighted data:', weighted);
+        console.log('US final total:', total);
+      }
+
       return {
         country: d.country,
         ...weighted,
@@ -210,7 +285,6 @@ const BarChart: React.FC<Props> = ({
     const innerWidth = width - margin.left - margin.right;
     const innerHeight = height - margin.top - margin.bottom;
 
-    // Get the appropriate data and keys based on view state
     const chartData =
       viewState.type === 'sector'
         ? viewState.sector === 'ai'
@@ -239,6 +313,9 @@ const BarChart: React.FC<Props> = ({
           )
         : ['ai', 'quantum', 'semiconductors', 'biotech', 'space'];
 
+    console.log('Chart data for rendering:', chartData);
+    console.log('Keys for stacking:', keys);
+
     const sortedData = [...chartData].sort((a, b) => (b.total || 0) - (a.total || 0));
 
     const svg = d3.select(svgRef.current);
@@ -256,6 +333,8 @@ const BarChart: React.FC<Props> = ({
 
     const stackGen = d3.stack<ChartDataItem>().keys(keys);
     const layers = stackGen(sortedData);
+
+    console.log('Stacked data:', layers);
 
     const y = d3
       .scaleLinear()
