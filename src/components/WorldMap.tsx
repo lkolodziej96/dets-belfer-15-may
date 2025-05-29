@@ -7,6 +7,12 @@ import type { AggregatedCountryData, CountryData, CountryOption } from '../types
 import { calculateColorIntensity } from '../utils/dataProcessing';
 import { subsectorDefinitions, sectorColors, viewBaseColors } from '../utils/constants';
 import type { Sector } from '@/sectors/sectorDef';
+import { getSubsectorColor } from '@/subsectors/colors';
+import { getSectorColor } from '@/sectors/colors';
+import { theme } from '@/theme';
+import { getSubsectorLabel } from '@/subsectors/labels';
+import { getSectorLabel } from '@/sectors/labels';
+import { getPercentage } from '@/utils/display';
 
 // Map for converting between world map country names and data country names
 const countryNameMap = {
@@ -19,6 +25,60 @@ const countryNameMap = {
   'Republic of Singapore': 'Singapore',
   Singapore: 'Singapore',
 };
+
+function generateTooltipContent(
+  selectedSector: Sector | null,
+  { country, data, total }: AggregatedCountryData,
+) {
+  let tooltipContent = `
+      <div style="font-weight: 700; margin-bottom: 8px; color: #1A202C; font-size: 16px; border-bottom: 1px solid #E2E8F0; padding-bottom: 6px;">
+        ${country}
+      </div>
+      <div style="margin-bottom: 8px;">
+    `;
+  const baseColor = selectedSector ? getSectorColor(selectedSector) : theme.colors.main;
+
+  Object.entries(data).forEach(([key, value], index) => {
+    const intensity = index / Object.keys(data).length;
+    const color = d3.color(baseColor)!.brighter(intensity).toString();
+    const label = selectedSector
+      ? getSubsectorLabel(selectedSector, key)
+      : getSectorLabel(key as Sector);
+
+    tooltipContent += `
+          <div style="
+            display: flex;
+            align-items: center;
+            margin-bottom: 6px;
+            padding: 4px;
+            border-radius: 4px;
+          ">
+            <div style="
+              width: 12px;
+              height: 12px;
+              background-color: ${color};
+              margin-right: 8px;
+              border-radius: 2px;
+            "></div>
+            <div style="flex-grow: 1; color: #4A5568;">
+              ${label}
+            </div>
+            <div style="color: #2D3748; font-weight: 500;">
+              ${getPercentage(value)}
+            </div>
+          </div>
+        `;
+  });
+
+  tooltipContent += `
+      </div>
+      <div style="font-weight: 600; color: #2D3748; border-top: 1px solid #E2E8F0; padding-top: 6px;">
+        Total Score: ${getPercentage(total)}
+      </div>
+    `;
+
+  return tooltipContent;
+}
 
 export type WorldMapProps = {
   selectedSector: string | null;
@@ -418,103 +478,6 @@ export default function WorldMap({
   //     }
   //   });
   // }, [data, selectedSubsector, selectedCountries, onCountrySelect, countryNameMap, countryData]);
-
-  // const generateTooltipContent = (
-  //   countryData: CountryData,
-  //   selectedSector: Sector | null,
-  //   selectedSubsector: string | null,
-  // ) => {
-  //   let tooltipContent = `
-  //     <div style="font-weight: 700; margin-bottom: 8px; color: #1A202C; font-size: 16px; border-bottom: 1px solid #E2E8F0; padding-bottom: 6px;">
-  //       ${countryData.country}
-  //     </div>
-  //     <div style="margin-bottom: 8px;">
-  //   `;
-
-  //   if (viewState.type === 'sector' && viewState.sector) {
-  //     // Show subsector scores
-  //     const sectorDetails = countryData.sectorDetails?.[viewState.sector] ?? {};
-  //     const subsectorDefs = subsectorDefinitions[viewState.sector] ?? {};
-  //     const baseColor = viewBaseColors[viewState.sector];
-
-  //     Object.entries(sectorDetails).forEach(([key, value], index) => {
-  //       const intensity = index / Object.keys(sectorDetails).length;
-  //       const color = d3.color(baseColor)!.brighter(intensity).toString();
-
-  //       tooltipContent += `
-  //         <div style="
-  //           display: flex;
-  //           align-items: center;
-  //           margin-bottom: 6px;
-  //           padding: 4px;
-  //           border-radius: 4px;
-  //         ">
-  //           <div style="
-  //             width: 12px;
-  //             height: 12px;
-  //             background-color: ${color};
-  //             margin-right: 8px;
-  //             border-radius: 2px;
-  //           "></div>
-  //           <div style="flex-grow: 1; color: #4A5568;">
-  //             ${subsectorDefs[key] ?? key}
-  //           </div>
-  //           <div style="color: #2D3748; font-weight: 500;">
-  //             ${(value as number).toFixed(3)}
-  //           </div>
-  //         </div>
-  //       `;
-  //     });
-  //   } else {
-  //     // Show sector scores
-  //     Object.entries(countryData.sectorDetails ?? {}).forEach(([sector, details]) => {
-  //       const sectorScore = Object.values(details).reduce((sum, val) => sum + (val ?? 0), 0);
-  //       const color = sectorColors[sector];
-
-  //       tooltipContent += `
-  //         <div style="
-  //           display: flex;
-  //           align-items: center;
-  //           margin-bottom: 6px;
-  //           padding: 4px;
-  //           border-radius: 4px;
-  //         ">
-  //           <div style="
-  //             width: 12px;
-  //             height: 12px;
-  //             background-color: ${color};
-  //             margin-right: 8px;
-  //             border-radius: 2px;
-  //           "></div>
-  //           <div style="flex-grow: 1; color: #4A5568;">
-  //             ${sector.toUpperCase()}
-  //           </div>
-  //           <div style="color: #2D3748; font-weight: 500;">
-  //             ${sectorScore.toFixed(3)}
-  //           </div>
-  //         </div>
-  //       `;
-  //     });
-  //   }
-
-  //   // Calculate and show total score
-  //   const totalScore =
-  //     viewState.type === 'sector' && viewState.sector
-  //       ? Object.values(countryData.sectorDetails?.[viewState.sector] ?? {}).reduce(
-  //           (sum, val) => sum + (val ?? 0),
-  //           0,
-  //         )
-  //       : countryData.totalScore;
-
-  //   tooltipContent += `
-  //     </div>
-  //     <div style="font-weight: 600; color: #2D3748; border-top: 1px solid #E2E8F0; padding-top: 6px;">
-  //       Total Score: ${totalScore.toFixed(3)}
-  //     </div>
-  //   `;
-
-  //   return tooltipContent;
-  // };
 
   const handleZoom = (action: 'in' | 'out' | 'reset') => {
     if (!svgRef.current || !zoomRef.current) return;
