@@ -182,23 +182,6 @@ export default function App() {
     });
   };
 
-  const getActiveColumns = () => {
-    switch (selectedSector) {
-      case 'ai':
-        return aiColumns;
-      case 'quantum':
-        return quantumColumns;
-      case 'semiconductors':
-        return semiconductorsColumns;
-      case 'biotech':
-        return biotechColumns;
-      case 'space':
-        return spaceColumns;
-      default:
-        return overviewColumns;
-    }
-  };
-
   const formatSectorLabel = (sector?: Sector | null) => {
     if (!sector) return 'Sector';
 
@@ -317,20 +300,13 @@ export default function App() {
 
             {/* Data Table */}
             <div className="rounded-xl border border-gray-100 bg-white p-8 shadow-lg">
-              {/* <DataTable
-                data={data}
-                columns={getActiveColumns()}
+              <DataTable
                 selectedSector={selectedSector}
                 selectedCountries={selectedCountries}
-                viewState={viewState}
-                handleSort={handleSort}
-                sectorWeights={sectorWeights}
-                aiSubsectorWeights={aiSubsectorWeights}
-                quantumSubsectorWeights={quantumSubsectorWeights}
-                semiconductorsSubsectorWeights={semiconductorsSubsectorWeights}
-                biotechSubsectorWeights={biotechSubsectorWeights}
-                spaceSubsectorWeights={spaceSubsectorWeights}
-              /> */}
+                weightedSubSectorDataPerCountry={weightedSubSectorDataPerCountry}
+                totalSectorScoresPerCountry={totalSectorScoresPerCountry}
+                totalCountryScores={totalCountryScores}
+              />
             </div>
           </div>
         </div>
