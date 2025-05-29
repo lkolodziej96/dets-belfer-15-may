@@ -40,8 +40,9 @@ export default function BarChart({
     () =>
       aggregatedData
         .toSorted((a, b) => b.total - a.total)
-        .map(({ country, data }) => ({
+        .map(({ country, data, total }) => ({
           country,
+          total: getPercentage(total),
           ...Object.entries(data).reduce(
             (acc, [key, value]) => {
               acc[key] = getPercentage(value);

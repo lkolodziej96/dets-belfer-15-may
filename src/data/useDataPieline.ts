@@ -65,14 +65,14 @@ export function useDataPipeline({
             const sector = _sector as Sector;
             const sectorScore = Object.values(subsectorData).reduce((sum, score) => sum + score, 0);
 
-            acc[sector] = sectorScore * weights.overall[sector];
+            acc[sector] = sectorScore;
             return acc;
           },
           {} as Record<Sector, number>,
         ),
       };
     });
-  }, [weightedSubSectorDataPerCountry, weights.overall]);
+  }, [weightedSubSectorDataPerCountry]);
 
   debug('totalSectorScoresPerCountry')(totalSectorScoresPerCountry);
 
@@ -80,12 +80,14 @@ export function useDataPipeline({
     return totalSectorScoresPerCountry.map(({ country, sectors }) => {
       return {
         country,
-        score: Object.entries(sectors).reduce((sum, [, sectorToal]) => {
-          return sum + sectorToal;
-        }, 0),
+        score: selectedSector
+          ? sectors[selectedSector]
+          : Object.entries(sectors).reduce((sum, [, sectorToal]) => {
+              return sum + sectorToal;
+            }, 0),
       };
     });
-  }, [totalSectorScoresPerCountry]);
+  }, [totalSectorScoresPerCountry, selectedSector]);
 
   debug('totalCountryScores')(totalCountryScores);
 
