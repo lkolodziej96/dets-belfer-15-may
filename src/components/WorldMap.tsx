@@ -3,11 +3,9 @@ import * as d3 from 'd3';
 import { feature } from 'topojson-client';
 import Select from 'react-select';
 import { ZoomIn, ZoomOut, RotateCcw } from 'lucide-react';
-import type { AggregatedCountryData, CountryData, CountryOption } from '../types';
+import type { AggregatedCountryData, CountryOption } from '../types';
 import { calculateColorIntensity } from '../utils/dataProcessing';
-import { subsectorDefinitions, sectorColors, viewBaseColors } from '../utils/constants';
 import type { Sector } from '@/sectors/sectorDef';
-import { getSubsectorColor } from '@/subsectors/colors';
 import { getSectorColor } from '@/sectors/colors';
 import { theme } from '@/theme';
 import { getSubsectorLabel } from '@/subsectors/labels';
@@ -81,7 +79,7 @@ function generateTooltipContent(
 }
 
 export type WorldMapProps = {
-  selectedSector: string | null;
+  selectedSector: Sector | null;
   selectedCountries: string[];
   onCountrySelect: (countries: string[]) => void;
   aggregatedData: AggregatedCountryData[];
@@ -97,7 +95,7 @@ export default function WorldMap({
 }: WorldMapProps) {
   const svgRef = useRef<SVGSVGElement>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);
-  const zoomRef = useRef<d3.ZoomBehavior<Element, unknown>>(null);
+  const zoomRef = useRef<d3.ZoomBehavior<Element, unknown> | null>(null);
   const geoPathRef = useRef<d3.GeoPath>();
   const featuresRef = useRef<any[]>([]);
   const countryData = useMemo(
@@ -214,270 +212,218 @@ export default function WorldMap({
     [onCountrySelect, zoomToCountries],
   );
 
-  // useEffect(() => {
-  //   if (!svgRef.current || !data.length) return;
+  useEffect(() => {
+    if (!svgRef.current || !aggregatedData.length) return;
 
-  //   const width = svgRef.current.clientWidth;
-  //   const height = 400;
-  //   const svg = d3.select(svgRef.current);
+    const width = svgRef.current.clientWidth;
+    const height = 400;
+    const svg = d3.select(svgRef.current);
 
-  //   svg.selectAll('*').remove();
+    svg.selectAll('*').remove();
 
-  //   const projection = d3
-  //     .geoMercator()
-  //     .scale((width - 3) / (2 * Math.PI))
-  //     .translate([width / 2, height / 2]);
+    const projection = d3
+      .geoMercator()
+      .scale((width - 3) / (2 * Math.PI))
+      .translate([width / 2, height / 2]);
 
-  //   const path = d3.geoPath().projection(projection);
-  //   geoPathRef.current = path;
+    const path = d3.geoPath().projection(projection);
+    geoPathRef.current = path;
 
-  //   const g = svg.append('g');
+    const g = svg.append('g');
 
-  //   const tooltip = d3
-  //     .select(tooltipRef.current)
-  //     .style('position', 'fixed')
-  //     .style('visibility', 'hidden')
-  //     .style('background-color', 'white')
-  //     .style('padding', '16px')
-  //     .style('border', '1px solid #E2E8F0')
-  //     .style('border-radius', '8px')
-  //     .style('box-shadow', '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)')
-  //     .style('pointer-events', 'none')
-  //     .style('font-family', "'Inter', 'Helvetica', 'Arial', sans-serif")
-  //     .style('font-size', '14px')
-  //     .style('z-index', '9999')
-  //     .style('min-width', '280px')
-  //     .style('max-width', '320px');
+    const tooltip = d3
+      .select(tooltipRef.current)
+      .style('position', 'fixed')
+      .style('visibility', 'hidden')
+      .style('background-color', 'white')
+      .style('padding', '16px')
+      .style('border', '1px solid #E2E8F0')
+      .style('border-radius', '8px')
+      .style('box-shadow', '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)')
+      .style('pointer-events', 'none')
+      .style('font-family', "'Inter', 'Helvetica', 'Arial', sans-serif")
+      .style('font-size', '14px')
+      .style('z-index', '9999')
+      .style('min-width', '280px')
+      .style('max-width', '320px');
 
-  //   countryData.then((worldData) => {
-  //     const countries = feature(worldData, worldData.objects.countries);
-  //     featuresRef.current = countries.features;
+    countryData.then((worldData) => {
+      const countries = feature(worldData, worldData.objects.countries);
+      featuresRef.current = (countries as any).features;
 
-  //     const maxScore =
-  //       d3.max(data, (d) => {
-  //         if (viewState.type === 'sector' && viewState.sector) {
-  //           const sectorDetails = d.sectorDetails?.[viewState.sector] ?? {};
-  //           return d3.max(Object.values(sectorDetails)) || 0;
-  //         }
-  //         return selectedSubsector ? d.sectorScores[selectedSubsector] : d.totalScore;
-  //       }) || 0;
+      const maxScore = aggregatedData.reduce((max, country) => {
+        return Math.max(max, country.total);
+      }, 0);
 
-  //     const countryDataMap = new Map(data.map((d) => [d.country, d]));
+      const countryDataMap = new Map(aggregatedData.map((d) => [d.country, d]));
 
-  //     // Add Singapore point
-  //     if (countryDataMap.has('Singapore')) {
-  //       const singaporeData = countryDataMap.get('Singapore')!;
-  //       const singaporeCoords = [103.8198, 1.3521]; // Singapore coordinates
+      console.log(countryDataMap);
 
-  //       g.append('circle')
-  //         .attr('cx', projection(singaporeCoords)![0])
-  //         .attr('cy', projection(singaporeCoords)![1])
-  //         .attr('r', 3)
-  //         .attr('fill', () => {
-  //           let score;
-  //           if (viewState.type === 'sector' && viewState.sector) {
-  //             const sectorScores = Object.values(
-  //               singaporeData.sectorDetails?.[viewState.sector] ?? {},
-  //             );
-  //             score =
-  //               sectorScores.length > 0
-  //                 ? sectorScores.reduce((sum, val) => sum + (val ?? 0), 0) / sectorScores.length
-  //                 : 0;
-  //           } else {
-  //             score = selectedSubsector
-  //               ? singaporeData.sectorScores[selectedSubsector]
-  //               : singaporeData.totalScore;
-  //           }
+      // Add Singapore point
+      if (countryDataMap.has('Singapore')) {
+        const singaporeData = countryDataMap.get('Singapore')!;
+        const singaporeCoords = [103.8198, 1.3521] as [number, number]; // Singapore coordinates
+        g.append('circle')
+          .attr('cx', projection(singaporeCoords)![0])
+          .attr('cy', projection(singaporeCoords)![1])
+          .attr('r', 3)
+          .attr('fill', () =>
+            calculateColorIntensity(singaporeData.total, maxScore, selectedSector),
+          )
+          .attr('stroke', '#cbd5e0')
+          .attr('stroke-width', selectedCountries.includes('Singapore') ? 2 : 0.5)
+          .style(
+            'opacity',
+            selectedCountries.length && !selectedCountries.includes('Singapore') ? 0.5 : 1,
+          )
+          .style('cursor', 'pointer')
+          .on('click', () => {
+            const newSelectedCountries = selectedCountries.includes('Singapore')
+              ? selectedCountries.filter((c) => c !== 'Singapore')
+              : [...selectedCountries, 'Singapore'];
+            onCountrySelect(newSelectedCountries);
+            zoomToCountries(newSelectedCountries);
+          })
+          .on('mouseover', (event) => {
+            // Show tooltip with Singapore data
+            const tooltipContent = generateTooltipContent(selectedSector, singaporeData);
+            tooltip.html(tooltipContent).style('visibility', 'visible');
+            d3.select(event.currentTarget)
+              .transition()
+              .duration(200)
+              .attr('stroke-width', '2')
+              .attr('stroke', '#4A5568');
+          })
+          .on('mousemove', (event) => {
+            const [mouseX, mouseY] = d3.pointer(event, document.body);
+            const tooltipNode = tooltip.node() as HTMLDivElement;
+            const tooltipWidth = tooltipNode.offsetWidth;
+            const tooltipHeight = tooltipNode.offsetHeight;
+            let left = mouseX + 16;
+            let top = mouseY - tooltipHeight / 2;
+            if (left + tooltipWidth > window.innerWidth) {
+              left = mouseX - tooltipWidth - 16;
+            }
+            if (top < 0) {
+              top = 0;
+            } else if (top + tooltipHeight > window.innerHeight) {
+              top = window.innerHeight - tooltipHeight;
+            }
+            tooltip.style('left', `${left}px`).style('top', `${top}px`);
+          })
+          .on('mouseout', (event) => {
+            tooltip.style('visibility', 'hidden');
+            d3.select(event.currentTarget)
+              .transition()
+              .duration(200)
+              .attr('stroke-width', selectedCountries.includes('Singapore') ? 2 : 0.5)
+              .attr('stroke', '#cbd5e0');
+          });
+      }
 
-  //           return calculateColorIntensity(score, maxScore, viewState.type, viewState.sector);
-  //         })
-  //         .attr('stroke', '#cbd5e0')
-  //         .attr('stroke-width', selectedCountries.includes('Singapore') ? 2 : 0.5)
-  //         .style(
-  //           'opacity',
-  //           selectedCountries.length && !selectedCountries.includes('Singapore') ? 0.5 : 1,
-  //         )
-  //         .style('cursor', 'pointer')
-  //         .on('click', () => {
-  //           const newSelectedCountries = selectedCountries.includes('Singapore')
-  //             ? selectedCountries.filter((c) => c !== 'Singapore')
-  //             : [...selectedCountries, 'Singapore'];
-  //           onCountrySelect(newSelectedCountries);
-  //           zoomToCountries(newSelectedCountries);
-  //         })
-  //         .on('mouseover', (event) => {
-  //           // Show tooltip with Singapore data
-  //           const tooltipContent = generateTooltipContent(
-  //             singaporeData,
-  //             viewState,
-  //             selectedSubsector,
-  //           );
-  //           tooltip.html(tooltipContent).style('visibility', 'visible');
+      g.selectAll('path')
+        .data((countries as any).features)
+        .enter()
+        .append('path')
+        .attr('d', path as any)
+        .attr('fill', (d: any) => {
+          const countryName = d.properties.name;
+          const mappedName =
+            countryNameMap[countryName as keyof typeof countryNameMap] || countryName;
+          const countryData = countryDataMap.get(mappedName);
+          if (!countryData) return '#e2e8f0';
 
-  //           d3.select(event.currentTarget)
-  //             .transition()
-  //             .duration(200)
-  //             .attr('stroke-width', '2')
-  //             .attr('stroke', '#4A5568');
-  //         })
-  //         .on('mousemove', (event) => {
-  //           const [mouseX, mouseY] = d3.pointer(event, document.body);
-  //           const tooltipNode = tooltip.node() as HTMLDivElement;
-  //           const tooltipWidth = tooltipNode.offsetWidth;
-  //           const tooltipHeight = tooltipNode.offsetHeight;
+          return calculateColorIntensity(countryData.total, maxScore, selectedSector);
+        })
+        .attr('stroke', '#cbd5e0')
+        .attr('stroke-width', (d: any) => {
+          const countryName = d.properties.name;
+          const mappedName =
+            countryNameMap[countryName as keyof typeof countryNameMap] || countryName;
+          const isSelected = selectedCountries.includes(mappedName);
+          return isSelected ? 2 : 0.5;
+        })
+        .style('opacity', (d: any) => {
+          if (!selectedCountries.length) return 1;
+          const countryName = d.properties.name;
+          const mappedName =
+            countryNameMap[countryName as keyof typeof countryNameMap] || countryName;
+          return selectedCountries.includes(mappedName) ? 1 : 0.5;
+        })
+        .style('cursor', 'pointer')
+        .on('click', (_, d: any) => {
+          const countryName = d.properties.name;
+          const mappedName =
+            countryNameMap[countryName as keyof typeof countryNameMap] || countryName;
+          let newSelectedCountries;
+          if (selectedCountries.includes(mappedName)) {
+            newSelectedCountries = selectedCountries.filter((c) => c !== mappedName);
+          } else {
+            newSelectedCountries = [...selectedCountries, mappedName];
+          }
+          onCountrySelect(newSelectedCountries);
+          zoomToCountries(newSelectedCountries);
+        })
+        .on('mouseover', (event, d: any) => {
+          const countryName = d.properties.name;
+          const mappedName =
+            countryNameMap[countryName as keyof typeof countryNameMap] || countryName;
+          const countryData = countryDataMap.get(mappedName);
+          if (countryData) {
+            const tooltipContent = generateTooltipContent(selectedSector, countryData);
+            tooltip.html(tooltipContent).style('visibility', 'visible');
+            d3.select(event.currentTarget)
+              .transition()
+              .duration(200)
+              .attr('stroke-width', '2')
+              .attr('stroke', '#4A5568');
+          }
+        })
+        .on('mousemove', (event) => {
+          const [mouseX, mouseY] = d3.pointer(event, document.body);
+          const tooltipNode = tooltip.node() as HTMLDivElement;
+          const tooltipWidth = tooltipNode.offsetWidth;
+          const tooltipHeight = tooltipNode.offsetHeight;
+          let left = mouseX + 16;
+          let top = mouseY - tooltipHeight / 2;
+          if (left + tooltipWidth > window.innerWidth) {
+            left = mouseX - tooltipWidth - 16;
+          }
+          if (top < 0) {
+            top = 0;
+          } else if (top + tooltipHeight > window.innerHeight) {
+            top = window.innerHeight - tooltipHeight;
+          }
+          tooltip.style('left', `${left}px`).style('top', `${top}px`);
+        })
+        .on('mouseout', (event) => {
+          tooltip.style('visibility', 'hidden');
+          d3.select(event.currentTarget)
+            .transition()
+            .duration(200)
+            .attr('stroke-width', (d) => {
+              const countryName = (d as any).properties.name;
+              const mappedName =
+                countryNameMap[countryName as keyof typeof countryNameMap] || countryName;
+              const isSelected = selectedCountries.includes(mappedName);
+              return isSelected ? 2 : 0.5;
+            })
+            .attr('stroke', '#cbd5e0');
+        });
 
-  //           let left = mouseX + 16;
-  //           let top = mouseY - tooltipHeight / 2;
-
-  //           if (left + tooltipWidth > window.innerWidth) {
-  //             left = mouseX - tooltipWidth - 16;
-  //           }
-
-  //           if (top < 0) {
-  //             top = 0;
-  //           } else if (top + tooltipHeight > window.innerHeight) {
-  //             top = window.innerHeight - tooltipHeight;
-  //           }
-
-  //           tooltip.style('left', `${left}px`).style('top', `${top}px`);
-  //         })
-  //         .on('mouseout', (event) => {
-  //           tooltip.style('visibility', 'hidden');
-
-  //           d3.select(event.currentTarget)
-  //             .transition()
-  //             .duration(200)
-  //             .attr('stroke-width', selectedCountries.includes('Singapore') ? 2 : 0.5)
-  //             .attr('stroke', '#cbd5e0');
-  //         });
-  //     }
-
-  //     g.selectAll('path')
-  //       .data(countries.features)
-  //       .enter()
-  //       .append('path')
-  //       .attr('d', path as any)
-  //       .attr('fill', (d: any) => {
-  //         const countryName = d.properties.name;
-  //         const mappedName = countryNameMap[countryName] || countryName;
-  //         const countryData = countryDataMap.get(mappedName);
-
-  //         if (!countryData) return '#e2e8f0';
-
-  //         let score;
-  //         if (viewState.type === 'sector' && viewState.sector) {
-  //           const sectorScores = Object.values(countryData.sectorDetails?.[viewState.sector] ?? {});
-  //           score =
-  //             sectorScores.length > 0
-  //               ? sectorScores.reduce((sum, val) => sum + (val ?? 0), 0) / sectorScores.length
-  //               : 0;
-  //         } else {
-  //           score = selectedSubsector
-  //             ? countryData.sectorScores[selectedSubsector]
-  //             : countryData.totalScore;
-  //         }
-
-  //         return calculateColorIntensity(score, maxScore, viewState.type, viewState.sector);
-  //       })
-  //       .attr('stroke', '#cbd5e0')
-  //       .attr('stroke-width', (d: any) => {
-  //         const countryName = d.properties.name;
-  //         const mappedName = countryNameMap[countryName] || countryName;
-  //         const isSelected = selectedCountries.includes(mappedName);
-  //         return isSelected ? 2 : 0.5;
-  //       })
-  //       .style('opacity', (d: any) => {
-  //         if (!selectedCountries.length) return 1;
-  //         const countryName = d.properties.name;
-  //         const mappedName = countryNameMap[countryName] || countryName;
-  //         return selectedCountries.includes(mappedName) ? 1 : 0.5;
-  //       })
-  //       .style('cursor', 'pointer')
-  //       .on('click', (event, d: any) => {
-  //         const countryName = d.properties.name;
-  //         const mappedName = countryNameMap[countryName] || countryName;
-
-  //         let newSelectedCountries;
-  //         if (selectedCountries.includes(mappedName)) {
-  //           newSelectedCountries = selectedCountries.filter((c) => c !== mappedName);
-  //         } else {
-  //           newSelectedCountries = [...selectedCountries, mappedName];
-  //         }
-
-  //         onCountrySelect(newSelectedCountries);
-  //         zoomToCountries(newSelectedCountries);
-  //       })
-  //       .on('mouseover', (event, d: any) => {
-  //         const countryName = d.properties.name;
-  //         const mappedName = countryNameMap[countryName] || countryName;
-  //         const countryData = countryDataMap.get(mappedName);
-
-  //         if (countryData) {
-  //           const tooltipContent = generateTooltipContent(
-  //             countryData,
-  //             viewState,
-  //             selectedSubsector,
-  //           );
-  //           tooltip.html(tooltipContent).style('visibility', 'visible');
-
-  //           d3.select(event.currentTarget)
-  //             .transition()
-  //             .duration(200)
-  //             .attr('stroke-width', '2')
-  //             .attr('stroke', '#4A5568');
-  //         }
-  //       })
-  //       .on('mousemove', (event) => {
-  //         const [mouseX, mouseY] = d3.pointer(event, document.body);
-  //         const tooltipNode = tooltip.node() as HTMLDivElement;
-  //         const tooltipWidth = tooltipNode.offsetWidth;
-  //         const tooltipHeight = tooltipNode.offsetHeight;
-
-  //         let left = mouseX + 16;
-  //         let top = mouseY - tooltipHeight / 2;
-
-  //         if (left + tooltipWidth > window.innerWidth) {
-  //           left = mouseX - tooltipWidth - 16;
-  //         }
-
-  //         if (top < 0) {
-  //           top = 0;
-  //         } else if (top + tooltipHeight > window.innerHeight) {
-  //           top = window.innerHeight - tooltipHeight;
-  //         }
-
-  //         tooltip.style('left', `${left}px`).style('top', `${top}px`);
-  //       })
-  //       .on('mouseout', (event) => {
-  //         tooltip.style('visibility', 'hidden');
-
-  //         d3.select(event.currentTarget)
-  //           .transition()
-  //           .duration(200)
-  //           .attr('stroke-width', (d) => {
-  //             const countryName = (d as any).properties.name;
-  //             const mappedName = countryNameMap[countryName] || countryName;
-  //             const isSelected = selectedCountries.includes(mappedName);
-  //             return isSelected ? 2 : 0.5;
-  //           })
-  //           .attr('stroke', '#cbd5e0');
-  //       });
-
-  //     const zoom = d3
-  //       .zoom()
-  //       .scaleExtent([1, 8])
-  //       .on('zoom', (event) => {
-  //         g.attr('transform', event.transform);
-  //       });
-
-  //     zoomRef.current = zoom;
-  //     svg.call(zoom as any);
-
-  //     if (selectedCountries.length) {
-  //       zoomToCountries(selectedCountries);
-  //     }
-  //   });
-  // }, [data, selectedSubsector, selectedCountries, onCountrySelect, countryNameMap, countryData]);
+      const zoom = d3
+        .zoom()
+        .scaleExtent([1, 8])
+        .on('zoom', (event) => {
+          g.attr('transform', event.transform);
+        });
+      zoomRef.current = zoom;
+      svg.call(zoom as any);
+      if (selectedCountries.length) {
+        zoomToCountries(selectedCountries);
+      }
+    });
+  }, [countryData, aggregatedData]);
 
   const handleZoom = (action: 'in' | 'out' | 'reset') => {
     if (!svgRef.current || !zoomRef.current) return;
