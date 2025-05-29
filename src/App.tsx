@@ -296,9 +296,8 @@ export default function App() {
                 selectedSector={selectedSector}
                 selectedCountries={selectedCountries}
                 onCountrySelect={handleCountrySelect}
-                weightedSubSectorDataPerCountry={weightedSubSectorDataPerCountry}
-                totalSectorScoresPerCountry={totalSectorScoresPerCountry}
-                totalCountryScores={totalCountryScores}
+                aggregatedData={aggregatedData}
+                selectedSubsector={selectedSubsector}
               />
             </div>
 

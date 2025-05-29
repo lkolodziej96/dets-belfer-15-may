@@ -1,10 +1,6 @@
 import * as d3 from 'd3';
 import { useEffect, useRef, useMemo, useCallback } from 'react';
-import type {
-  TotalCountryScoreData,
-  TotalSectorScoresCountryData,
-  WeightedSubSectorCountryData,
-} from '../types';
+import type { AggregatedCountryData } from '../types';
 
 import { getSubsectorList } from '@/subsectors/subsectorsDef';
 import { getSectorList, type Sector } from '@/sectors/sectorDef';
@@ -14,47 +10,24 @@ import { getSubsectorLabel } from '@/subsectors/labels';
 import { getSectorLabel } from '@/sectors/labels';
 import { getPercentage } from '@/utils/display';
 
-type BarChartProps = {
+export type BarChartProps = {
   selectedSector: Sector | null;
   selectedCountries: string[];
   onCountrySelect: (countries: string[]) => void;
-  weightedSubSectorDataPerCountry: WeightedSubSectorCountryData[];
-  totalSectorScoresPerCountry: TotalSectorScoresCountryData[];
-  totalCountryScores: TotalCountryScoreData[];
+  aggregatedData: AggregatedCountryData[];
+  selectedSubsector: string | null;
 };
 
 export default function BarChart({
   selectedSector,
   selectedCountries,
   onCountrySelect,
-  weightedSubSectorDataPerCountry,
-  totalSectorScoresPerCountry,
-  totalCountryScores,
+  aggregatedData,
+  selectedSubsector,
 }: BarChartProps) {
   const svgRef = useRef<SVGSVGElement>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-
-  const countryTotalLookup = useMemo(
-    () =>
-      totalCountryScores.reduce(
-        (acc, { country, score }) => {
-          acc[country] = score;
-          return acc;
-        },
-        {} as Record<string, number>,
-      ),
-    [totalCountryScores],
-  );
-  const countrySectorTotalLookup = useMemo(() => {
-    return totalSectorScoresPerCountry.reduce(
-      (acc, { country, sectors }) => {
-        acc[country] = sectors;
-        return acc;
-      },
-      {} as Record<string, Record<string, number>>,
-    );
-  }, [totalSectorScoresPerCountry]);
 
   // Each bar is per country and each bar contains the following items:
   const chartItemKeys = useMemo(
@@ -64,16 +37,11 @@ export default function BarChart({
 
   const chartData = useMemo(
     () =>
-      weightedSubSectorDataPerCountry
-        .map(({ country, sectors }) => ({
-          country,
-          ...(selectedSector ? sectors[selectedSector] : countrySectorTotalLookup[country]),
-          total: countryTotalLookup[country],
-        }))
+      aggregatedData
         .toSorted((a, b) => b.total - a.total)
-        .map(({ country, ...rest }) => ({
+        .map(({ country, data }) => ({
           country,
-          ...Object.entries(rest).reduce(
+          ...Object.entries(data).reduce(
             (acc, [key, value]) => {
               acc[key] = getPercentage(value);
               return acc;
@@ -81,7 +49,7 @@ export default function BarChart({
             {} as Record<string, number>,
           ),
         })),
-    [weightedSubSectorDataPerCountry, selectedSector, countrySectorTotalLookup, countryTotalLookup],
+    [aggregatedData, selectedSector],
   );
 
   const generateTooltipContent = useCallback(
@@ -290,8 +258,10 @@ export default function BarChart({
       .attr('width', (d) =>
         selectedCountries.includes(d.data.country) ? selectedWidth : normalWidth,
       )
-      .style('opacity', (d) => {
+      .style('opacity', (d, i, nodes) => {
+        const key = chartItemKeys[(d3.select((nodes[i] as any).parentNode).datum() as any).index];
         if (selectedCountries.length && !selectedCountries.includes(d.data.country)) return 0.3;
+        if (selectedSubsector && key !== selectedSubsector) return 0.3;
         return 1;
       });
 
@@ -336,12 +306,12 @@ export default function BarChart({
               chartItemKeys[(d3.select((nodes[i] as any).parentNode).datum() as any).index];
             if (selectedCountries.length && !selectedCountries.includes((d as any).data.country))
               return 0.3;
-            if (selectedSector && key !== selectedSector) return 0.3;
+            if (selectedSubsector && key !== selectedSubsector) return 0.3;
             return 1;
           })
           .style('filter', 'none');
       });
-  }, [selectedSector, selectedCountries, onCountrySelect, chartData, generateTooltipContent]);
+  }, [selectedSubsector, selectedCountries, onCountrySelect, chartData, generateTooltipContent]);
 
   return (
     <div ref={containerRef} className="relative">
