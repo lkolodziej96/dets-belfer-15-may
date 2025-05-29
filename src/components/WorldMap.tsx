@@ -36,14 +36,16 @@ function generateTooltipContent(
     `;
   const baseColor = selectedSector ? getSectorColor(selectedSector) : theme.colors.main;
 
-  Object.entries(data).forEach(([key, value], index) => {
-    const intensity = index / Object.keys(data).length;
-    const color = d3.color(baseColor)!.brighter(intensity).toString();
-    const label = selectedSector
-      ? getSubsectorLabel(selectedSector, key)
-      : getSectorLabel(key as Sector);
+  Object.entries(data)
+    .toSorted((a, b) => b[1] - a[1])
+    .forEach(([key, value], index) => {
+      const intensity = index / Object.keys(data).length;
+      const color = d3.color(baseColor)!.brighter(intensity).toString();
+      const label = selectedSector
+        ? getSubsectorLabel(selectedSector, key)
+        : getSectorLabel(key as Sector);
 
-    tooltipContent += `
+      tooltipContent += `
           <div style="
             display: flex;
             align-items: center;
@@ -66,7 +68,7 @@ function generateTooltipContent(
             </div>
           </div>
         `;
-  });
+    });
 
   tooltipContent += `
       </div>
@@ -121,6 +123,16 @@ export default function WorldMap({
       label: country,
     }));
   }, [selectedCountries]);
+
+  const mapData = useMemo(
+    () =>
+      aggregatedData.map(({ country, data, total }) => ({
+        country,
+        data: selectedSubsector ? { [selectedSubsector]: data[selectedSubsector] } : data,
+        total: selectedSubsector ? data[selectedSubsector] : total,
+      })),
+    [aggregatedData, selectedSubsector],
+  );
 
   const zoomToCountries = useCallback((countryNames: string[]) => {
     if (!svgRef.current || !zoomRef.current || !geoPathRef.current || !countryNames.length) return;
@@ -213,7 +225,7 @@ export default function WorldMap({
   );
 
   useEffect(() => {
-    if (!svgRef.current || !aggregatedData.length) return;
+    if (!svgRef.current) return;
 
     const width = svgRef.current.clientWidth;
     const height = 400;
@@ -251,13 +263,11 @@ export default function WorldMap({
       const countries = feature(worldData, worldData.objects.countries);
       featuresRef.current = (countries as any).features;
 
-      const maxScore = aggregatedData.reduce((max, country) => {
+      const maxScore = mapData.reduce((max, country) => {
         return Math.max(max, country.total);
       }, 0);
 
-      const countryDataMap = new Map(aggregatedData.map((d) => [d.country, d]));
-
-      console.log(countryDataMap);
+      const countryDataMap = new Map(mapData.map((d) => [d.country, d]));
 
       // Add Singapore point
       if (countryDataMap.has('Singapore')) {
@@ -423,7 +433,7 @@ export default function WorldMap({
         zoomToCountries(selectedCountries);
       }
     });
-  }, [countryData, aggregatedData]);
+  }, [mapData, countryData]);
 
   const handleZoom = (action: 'in' | 'out' | 'reset') => {
     if (!svgRef.current || !zoomRef.current) return;
