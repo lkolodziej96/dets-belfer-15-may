@@ -1,6 +1,6 @@
+import { getSectorColor } from '@/sectors/colors';
 import type { Sector } from '@/sectors/sectorDef';
 import { theme } from '@/theme';
-import { getSectorColor } from '@/sectors/colors';
 
 export function calculateColorIntensity(
   value: number,

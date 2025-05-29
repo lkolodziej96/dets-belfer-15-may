@@ -1,6 +1,7 @@
+import { useMemo } from 'react';
+
 import { getPercentage } from '@/utils/display';
 import { cn } from '@/utils/styling';
-import { useMemo } from 'react';
 
 type AllocationType = 'perfect' | 'under' | 'over';
 

@@ -1,13 +1,19 @@
 import { useState } from 'react';
+
 import { useImmer } from 'use-immer';
 
-import WorldMap from '@/components/WorldMap';
 import BarChart from '@/components/BarChart';
-import PieChart from '@/components/PieChart';
 import DataTable from '@/components/DataTable';
+import PieChart from '@/components/PieChart';
 import SectorNav from '@/components/SectorNav';
-import type { Sector } from '@/sectors/sectorDef';
+import { WeigthsTweaker } from '@/components/WeigthsTweaker';
+import WorldMap from '@/components/WorldMap';
+import type { Weights } from '@/data/types';
+import { useDataPipeline } from '@/data/useDataPieline';
+import { getSectorColor } from '@/sectors/colors';
 import { getSectorWeights } from '@/sectors/defaults';
+import { getSectorLabel } from '@/sectors/labels';
+import type { Sector } from '@/sectors/sectorDef';
 import {
   getAISectorWeights,
   getBiotechSectorWeights,
@@ -15,13 +21,8 @@ import {
   getSemiconductorsSectorWeights,
   getSpaceSectorWeights,
 } from '@/subsectors/defaults';
-import { WeigthsTweaker } from '@/components/WeigthsTweaker';
-import { getSectorColor } from '@/sectors/colors';
-import { theme } from '@/theme';
-import { getSectorLabel } from '@/sectors/labels';
 import { getSubsectorLabel } from '@/subsectors/labels';
-import { useDataPipeline } from '@/data/useDataPieline';
-import type { Weights } from '@/data/types';
+import { theme } from '@/theme';
 
 function getDefaultWeights(): Weights {
   return {

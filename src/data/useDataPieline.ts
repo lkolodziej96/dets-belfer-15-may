@@ -1,5 +1,6 @@
-import debug from 'debug';
 import { useMemo } from 'react';
+
+import debug from 'debug';
 
 import { mainData } from '@/data/mainData';
 import type { AggregatedCountryData, Weights } from '@/data/types';

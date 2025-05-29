@@ -1,6 +1,6 @@
-import { type Sector, getSectorList } from '@/sectors/sectorDef';
-import { getSectorLabel } from '@/sectors/labels';
 import { getSectorColor } from '@/sectors/colors';
+import { getSectorLabel } from '@/sectors/labels';
+import { type Sector, getSectorList } from '@/sectors/sectorDef';
 import { cn } from '@/utils/styling';
 
 export type SectorNavProps = {

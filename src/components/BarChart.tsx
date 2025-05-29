@@ -1,13 +1,14 @@
-import * as d3 from 'd3';
 import { useEffect, useRef, useMemo, useCallback } from 'react';
-import type { AggregatedCountryData } from '@/data/types';
 
-import { getSubsectorList } from '@/subsectors/subsectorsDef';
+import * as d3 from 'd3';
+
+import type { AggregatedCountryData } from '@/data/types';
+import { getSectorColor } from '@/sectors/colors';
+import { getSectorLabel } from '@/sectors/labels';
 import { getSectorList, type Sector } from '@/sectors/sectorDef';
 import { getSubsectorColor } from '@/subsectors/colors';
-import { getSectorColor } from '@/sectors/colors';
 import { getSubsectorLabel } from '@/subsectors/labels';
-import { getSectorLabel } from '@/sectors/labels';
+import { getSubsectorList } from '@/subsectors/subsectorsDef';
 import { getPercentage } from '@/utils/display';
 
 export type BarChartProps = {

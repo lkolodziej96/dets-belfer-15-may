@@ -1,15 +1,17 @@
 import { useEffect, useRef, useMemo, useCallback } from 'react';
+
 import * as d3 from 'd3';
-import { feature } from 'topojson-client';
-import Select from 'react-select';
 import { ZoomIn, ZoomOut, RotateCcw } from 'lucide-react';
+import Select from 'react-select';
+import { feature } from 'topojson-client';
+
 import type { AggregatedCountryData } from '@/data/types';
-import { calculateColorIntensity } from '@/utils/dataProcessing';
-import type { Sector } from '@/sectors/sectorDef';
 import { getSectorColor } from '@/sectors/colors';
-import { theme } from '@/theme';
-import { getSubsectorLabel } from '@/subsectors/labels';
 import { getSectorLabel } from '@/sectors/labels';
+import type { Sector } from '@/sectors/sectorDef';
+import { getSubsectorLabel } from '@/subsectors/labels';
+import { theme } from '@/theme';
+import { calculateColorIntensity } from '@/utils/dataProcessing';
 import { getPercentage } from '@/utils/display';
 
 type CountryOption = {

@@ -1,14 +1,16 @@
 import React, { useState, useMemo } from 'react';
+
 import type { AggregatedCountryData } from '@/data/types';
-import { calculateColorIntensity } from '../utils/dataProcessing';
-import { getSectorList, type Sector } from '@/sectors/sectorDef';
 import { getSectorColor } from '@/sectors/colors';
-import { theme } from '@/theme';
-import { getSubsectorList } from '@/subsectors/subsectorsDef';
-import { getSubsectorLabel } from '@/subsectors/labels';
 import { getSectorLabel } from '@/sectors/labels';
+import { getSectorList, type Sector } from '@/sectors/sectorDef';
+import { getSubsectorLabel } from '@/subsectors/labels';
+import { getSubsectorList } from '@/subsectors/subsectorsDef';
+import { theme } from '@/theme';
 import { getPercentage } from '@/utils/display';
 import { cn } from '@/utils/styling';
+
+import { calculateColorIntensity } from '../utils/dataProcessing';
 
 export type DataTableProps = {
   selectedSector: Sector | null;

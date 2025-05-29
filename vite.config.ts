@@ -1,8 +1,8 @@
+import legacy from '@vitejs/plugin-legacy';
+import react from '@vitejs/plugin-react';
 import path from 'node:path';
 import { defineConfig, type Plugin } from 'vite';
-import react from '@vitejs/plugin-react';
 import xlsx from 'xlsx';
-import legacy from '@vitejs/plugin-legacy';
 
 export function excelToJsonPlugin({ excludeSheets }: { excludeSheets?: string[] }): Plugin {
   return {
