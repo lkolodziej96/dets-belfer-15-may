@@ -1,6 +1,6 @@
 import type { CountryData, SectorWeights } from '../types';
 import { validateAndProcessData, standardizeCountryNames } from './dataValidation';
-import { subsectorDefinitions, viewBaseColors } from './constants';
+import { subsectorDefinitions } from './constants';
 import type { Sector } from '@/sectors/sectorDef';
 import { theme } from '@/theme';
 import { getSectorColor } from '@/sectors/colors';

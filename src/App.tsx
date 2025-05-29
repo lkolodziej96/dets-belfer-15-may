@@ -1,39 +1,13 @@
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import { useImmer } from 'use-immer';
-import debug from 'debug';
 
-import WorldMap from './components/WorldMap';
-import BarChart from './components/BarChart';
-import PieChart from './components/PieChart';
-import DataTable from './components/DataTable';
-import SectorNav from './components/SectorNav';
-
-import {
-  mainData,
-  overviewColumns,
-  aiColumns,
-  quantumColumns,
-  semiconductorsColumns,
-  biotechColumns,
-  spaceColumns,
-} from './data/mainData';
-import type {
-  CountryData,
-  SectorWeights as SectorWeightsType,
-  TotalCountryScoreData,
-  TotalSectorScoresCountryData,
-  ViewState,
-  WeightedSubSectorCountryData,
-} from './types';
+import WorldMap from '@/components/WorldMap';
+import BarChart from '@/components/BarChart';
+import PieChart from '@/components/PieChart';
+import DataTable from '@/components/DataTable';
+import SectorNav from '@/components/SectorNav';
 import type { Sector } from '@/sectors/sectorDef';
 import { getSectorWeights } from '@/sectors/defaults';
-import type {
-  AISubsectors,
-  BiotechnologySubsectors,
-  QuantumSubsectors,
-  SemiconductorsSubsectors,
-  SpaceSubsectors,
-} from '@/subsectors/subsectorsDef';
 import {
   getAISectorWeights,
   getBiotechSectorWeights,
@@ -46,17 +20,8 @@ import { getSectorColor } from '@/sectors/colors';
 import { theme } from '@/theme';
 import { getSectorLabel } from '@/sectors/labels';
 import { getSubsectorLabel } from '@/subsectors/labels';
-
-type WeigthCategory = Sector | 'overall';
-
-type Weights = {
-  overall: Record<Sector, number>;
-  ai: Record<AISubsectors, number>;
-  biotech: Record<BiotechnologySubsectors, number>;
-  quantum: Record<QuantumSubsectors, number>;
-  semiconductors: Record<SemiconductorsSubsectors, number>;
-  space: Record<SpaceSubsectors, number>;
-};
+import { useDataPipeline } from '@/data/useDataPieline';
+import type { Weights } from '@/types';
 
 function getDefaultWeights(): Weights {
   return {
@@ -69,128 +34,24 @@ function getDefaultWeights(): Weights {
   };
 }
 
-function calculateSectorScore(
-  subsectorData: Record<string, number>,
-  weights: Record<string, number>,
-): number {
-  return Object.entries(subsectorData).reduce((total, [key, value]) => {
-    return total + value * (weights[key] ?? 0);
-  }, 0);
-}
+function formatSectorLabel(sector: Sector | null) {
+  if (!sector) return 'Sector';
 
-function applyWeightsToSubsectorData(
-  subsectorData: Record<string, number>,
-  weights: Record<string, number>,
-): Record<string, number> {
-  return Object.entries(subsectorData).reduce(
-    (acc, [key, value]) => {
-      acc[key] = value * (weights[key] ?? 0);
-      return acc;
-    },
-    {} as Record<string, number>,
-  );
+  const acronymOverrides: Record<string, string> = {
+    ai: 'AI',
+  };
+
+  const lower = sector.toLowerCase();
+  return acronymOverrides[lower] || lower.charAt(0).toUpperCase() + lower.slice(1);
 }
 
 export default function App() {
   const [selectedSector, setSelectedSector] = useState<Sector | null>(null);
   const [selectedSubsector, setSelectedSubsector] = useState<string | null>(null);
-  const [weights, setWeights] = useImmer<Weights>(getDefaultWeights);
-  const weightedSubSectorDataPerCountry: WeightedSubSectorCountryData[] = useMemo(
-    () =>
-      mainData.map(({ country, sectorDetails }) => {
-        return {
-          country,
-          sectors: Object.entries(sectorDetails).reduce(
-            (acc, [_sector, _subSectors]) => {
-              const sector = _sector as Sector;
-              const subSectorData = _subSectors as Record<string, number>;
-              const correctWeights = weights[sector];
-              const weightedSubsectorData = applyWeightsToSubsectorData(
-                subSectorData,
-                correctWeights,
-              );
-
-              acc[sector] = weightedSubsectorData;
-
-              return acc;
-            },
-            {} as Record<Sector, Record<string, number>>,
-          ),
-        };
-      }),
-    [mainData, weights],
-  );
-
-  debug('weightedSubSectorDataPerCountry')(weightedSubSectorDataPerCountry);
-
-  const totalSectorScoresPerCountry: TotalSectorScoresCountryData[] = useMemo(() => {
-    return weightedSubSectorDataPerCountry.map(({ country, sectors }) => {
-      return {
-        country,
-        sectors: Object.entries(sectors).reduce(
-          (acc, [_sector, subsectorData]) => {
-            const sector = _sector as Sector;
-            const sectorScore = Object.values(subsectorData).reduce((sum, score) => sum + score, 0);
-
-            acc[sector] = sectorScore * weights.overall[sector];
-            return acc;
-          },
-          {} as Record<Sector, number>,
-        ),
-      };
-    });
-  }, [weightedSubSectorDataPerCountry]);
-
-  debug('totalSectorScoresPerCountry')(totalSectorScoresPerCountry);
-
-  const totalCountryScores: TotalCountryScoreData[] = useMemo(() => {
-    return totalSectorScoresPerCountry.map(({ country, sectors }) => {
-      return {
-        country,
-        score: Object.entries(sectors).reduce((sum, [, sectorToal]) => {
-          return sum + sectorToal;
-        }, 0),
-      };
-    });
-  }, [totalSectorScoresPerCountry]);
-
-  debug('totalCountryScores')(totalCountryScores);
-
-  const countrySectorTotalLookup = useMemo(() => {
-    return totalSectorScoresPerCountry.reduce(
-      (acc, { country, sectors }) => {
-        acc[country] = sectors;
-        return acc;
-      },
-      {} as Record<string, Record<string, number>>,
-    );
-  }, [totalSectorScoresPerCountry]);
-
-  const countryTotalLookup = useMemo(
-    () =>
-      totalCountryScores.reduce(
-        (acc, { country, score }) => {
-          acc[country] = score;
-          return acc;
-        },
-        {} as Record<string, number>,
-      ),
-    [totalCountryScores],
-  );
-
-  const aggregatedData = useMemo(
-    () =>
-      weightedSubSectorDataPerCountry.map(({ country, sectors }) => ({
-        country,
-        data: selectedSector ? sectors[selectedSector] : countrySectorTotalLookup[country],
-        total: countryTotalLookup[country],
-      })),
-    [weightedSubSectorDataPerCountry, selectedSector, countrySectorTotalLookup],
-  );
-
-  debug('aggregatedData')(aggregatedData);
-
   const [selectedCountries, setSelectedCountries] = useState<string[]>([]);
+
+  const [weights, setWeights] = useImmer<Weights>(getDefaultWeights);
+  const aggregatedData = useDataPipeline({ weights, selectedSector });
 
   const handleCountrySelect = (countries: string[]) => {
     setSelectedCountries(countries);
@@ -203,7 +64,7 @@ export default function App() {
 
   const handleReset = () => {
     const defaultWeights = getDefaultWeights();
-    // setSelectedSector(null);
+    setSelectedSubsector(null);
     setSelectedCountries([]);
     setWeights((draft) => {
       if (selectedSector) {
@@ -213,17 +74,6 @@ export default function App() {
         draft.overall = defaultWeights.overall;
       }
     });
-  };
-
-  const formatSectorLabel = (sector?: Sector | null) => {
-    if (!sector) return 'Sector';
-
-    const acronymOverrides: Record<string, string> = {
-      ai: 'AI',
-    };
-
-    const lower = sector.toLowerCase();
-    return acronymOverrides[lower] || lower.charAt(0).toUpperCase() + lower.slice(1);
   };
 
   return (
@@ -240,10 +90,7 @@ export default function App() {
           </div>
         </div>
       </div>
-      <SectorNav
-        currentSector={selectedSector}
-        onSectorChange={(newSector) => handleSectorNavClick(newSector)}
-      />
+      <SectorNav currentSector={selectedSector} onSectorChange={handleSectorNavClick} />
 
       <div className="px-8 py-8">
         <div className="flex gap-8">
