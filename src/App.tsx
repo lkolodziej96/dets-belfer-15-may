@@ -334,9 +334,8 @@ export default function App() {
               <DataTable
                 selectedSector={selectedSector}
                 selectedCountries={selectedCountries}
-                weightedSubSectorDataPerCountry={weightedSubSectorDataPerCountry}
-                totalSectorScoresPerCountry={totalSectorScoresPerCountry}
-                totalCountryScores={totalCountryScores}
+                aggregatedData={aggregatedData}
+                selectedSubsector={selectedSubsector}
               />
             </div>
           </div>

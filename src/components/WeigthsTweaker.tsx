@@ -77,7 +77,7 @@ export function WeigthsTweaker({
         <div className={cn('mt-1 text-xs', textColor)}>{message}</div>
         <div className="mt-2 h-1.5 w-full rounded-full bg-gray-100">
           <div
-            className={`h-1.5 rounded-full transition-all duration-300`}
+            className="h-1.5 rounded-full transition-all duration-300"
             style={{
               width: `${Math.min(totalPercentage, 100)}%`,
               backgroundColor: accentColor,

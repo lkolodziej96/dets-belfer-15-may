@@ -1,9 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import type {
-  TotalCountryScoreData,
-  TotalSectorScoresCountryData,
-  WeightedSubSectorCountryData,
-} from '../types';
+import type { AggregatedCountryData } from '../types';
 import { calculateColorIntensity } from '../utils/dataProcessing';
 import { getSectorList, type Sector } from '@/sectors/sectorDef';
 import { getSectorColor } from '@/sectors/colors';
@@ -12,21 +8,20 @@ import { getSubsectorList } from '@/subsectors/subsectorsDef';
 import { getSubsectorLabel } from '@/subsectors/labels';
 import { getSectorLabel } from '@/sectors/labels';
 import { getPercentage } from '@/utils/display';
+import { cn } from '@/utils/styling';
 
-type DataTableProps = {
+export type DataTableProps = {
   selectedSector: Sector | null;
   selectedCountries: string[];
-  weightedSubSectorDataPerCountry: WeightedSubSectorCountryData[];
-  totalSectorScoresPerCountry: TotalSectorScoresCountryData[];
-  totalCountryScores: TotalCountryScoreData[];
+  selectedSubsector: string | null;
+  aggregatedData: AggregatedCountryData[];
 };
 
 export default function DataTable({
   selectedSector,
   selectedCountries,
-  weightedSubSectorDataPerCountry,
-  totalCountryScores,
-  totalSectorScoresPerCountry,
+  aggregatedData,
+  selectedSubsector,
 }: DataTableProps) {
   const tableColumnKeys = useMemo(() => {
     return selectedSector ? getSubsectorList(selectedSector) : getSectorList();
@@ -47,41 +42,9 @@ export default function DataTable({
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const [tooltipContent, setTooltipContent] = useState<string>('');
 
-  const countrySectorTotalLookup = useMemo(() => {
-    return totalSectorScoresPerCountry.reduce(
-      (acc, { country, sectors }) => {
-        acc[country] = sectors;
-        return acc;
-      },
-      {} as Record<string, Record<string, number>>,
-    );
-  }, [totalSectorScoresPerCountry]);
-
-  const countryTotalLookup = useMemo(
-    () =>
-      totalCountryScores.reduce(
-        (acc, { country, score }) => {
-          acc[country] = score;
-          return acc;
-        },
-        {} as Record<string, number>,
-      ),
-    [totalCountryScores],
-  );
-
-  const data = useMemo(
-    () =>
-      weightedSubSectorDataPerCountry.map(({ country, sectors }) => ({
-        country,
-        data: selectedSector ? sectors[selectedSector] : countrySectorTotalLookup[country],
-        total: countryTotalLookup[country],
-      })),
-    [weightedSubSectorDataPerCountry, selectedSector, countrySectorTotalLookup],
-  );
-
   const tableData = useMemo(
     () =>
-      data
+      aggregatedData
         .toSorted((a, b) => {
           if (sortField === 'country') {
             return sortDirection === 'asc'
@@ -108,7 +71,7 @@ export default function DataTable({
           ),
           total: getPercentage(total),
         })),
-    [data, sortField, sortDirection],
+    [aggregatedData, sortField, sortDirection],
   );
 
   const maxScores = useMemo(
@@ -185,9 +148,10 @@ export default function DataTable({
             {columns.map(({ key, label }) => (
               <th
                 key={key}
-                className={`w-[7.5%] cursor-pointer px-2 py-3 text-left text-[11px] font-medium uppercase tracking-wider text-white hover:opacity-80 ${
-                  selectedSector && selectedSector !== key ? 'opacity-50' : ''
-                }`}
+                className={cn(
+                  'w-[7.5%] cursor-pointer px-2 py-3 text-left text-[11px] font-medium uppercase tracking-wider text-white hover:opacity-80',
+                  { 'opacity-50': selectedSubsector && selectedSubsector !== key },
+                )}
                 onClick={() => handleHeaderClick(key)}
                 onMouseEnter={(e) => handleHeaderMouseEnter(e, label)}
                 onMouseLeave={handleHeaderMouseLeave}
@@ -222,17 +186,17 @@ export default function DataTable({
             return (
               <tr
                 key={country}
-                className={`hover:bg-gray-50 ${
-                  selectedCountries.includes(country) ? 'bg-blue-50' : ''
-                }`}
+                className={cn('hover:bg-gray-50', {
+                  'bg-blue-50': selectedCountries.includes(country),
+                })}
               >
                 <td className="truncate px-2 py-2 text-sm font-medium text-gray-900">{country}</td>
                 {columns.map(({ key }) => (
                   <td
                     key={key}
-                    className={`px-2 py-2 text-center text-sm font-semibold ${
-                      selectedSector && selectedSector !== key ? 'opacity-50' : ''
-                    }`}
+                    className={cn('px-2 py-2 text-center text-sm font-semibold', {
+                      'opacity-50': selectedSubsector && selectedSubsector !== key,
+                    })}
                     style={{
                       backgroundColor: calculateColorIntensity(
                         data[key],

@@ -20,7 +20,7 @@ export default function SectorNav({
             onClick={() => onSectorClick(null)}
             className={cn(
               'rounded-xl bg-gray-100 px-8 py-3.5 text-sm font-medium text-gray-600 transition-all duration-200 hover:bg-gray-200',
-              !currentSector && 'bg-main shadow-main/20 hover:shadow-main/30 text-white shadow-lg',
+              !currentSector && 'bg-main text-white shadow-lg shadow-main/20 hover:shadow-main/30',
             )}
           >
             Overview
@@ -29,7 +29,7 @@ export default function SectorNav({
             <button
               key={sector}
               onClick={() => onSectorClick(sector)}
-              className={`rounded-xl px-8 py-3.5 text-sm font-medium transition-all duration-200`}
+              className="rounded-xl px-8 py-3.5 text-sm font-medium transition-all duration-200"
               style={{
                 backgroundColor:
                   currentSector === sector ? getSectorColor(sector) : 'rgb(243 244 246)',
