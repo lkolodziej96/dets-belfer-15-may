@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 
 import { useImmer } from 'use-immer';
 
@@ -54,16 +54,17 @@ export default function App() {
   const [weights, setWeights] = useImmer<Weights>(getDefaultWeights);
   const aggregatedData = useDataPipeline({ weights, selectedSector });
 
-  const handleCountrySelect = (countries: string[]) => {
+  const handleCountrySelect = useCallback((countries: string[]) => {
     setSelectedCountries(countries);
-  };
+  }, []);
 
-  const handleSectorNavClick = (sector: Sector | null) => {
+  const handleSectorNavClick = useCallback((sector: Sector | null) => {
     setSelectedSector(sector);
     setSelectedCountries([]);
-  };
+    setSelectedSubsector(null);
+  }, []);
 
-  const handleReset = () => {
+  const handleReset = useCallback(() => {
     const defaultWeights = getDefaultWeights();
     setSelectedSubsector(null);
     setSelectedCountries([]);
@@ -75,7 +76,7 @@ export default function App() {
         draft.overall = defaultWeights.overall;
       }
     });
-  };
+  }, [setWeights, selectedSector]);
 
   return (
     <div className="mx-auto w-[1200px] bg-gray-50">
