@@ -9,10 +9,11 @@ import type { Sector } from '@/sectors/sectorDef';
 function applyWeightsToSubsectorData(
   subsectorData: Record<string, number>,
   weights: Record<string, number>,
+  sectorWeight: number,
 ): Record<string, number> {
   return Object.entries(subsectorData).reduce(
     (acc, [key, value]) => {
-      acc[key] = value * (weights[key] ?? 0);
+      acc[key] = value * weights[key] * sectorWeight;
       return acc;
     },
     {} as Record<string, number>,
@@ -41,6 +42,7 @@ export function useDataPipeline({
               const weightedSubsectorData = applyWeightsToSubsectorData(
                 subSectorData,
                 correctWeights,
+                weights.overall[sector],
               );
 
               acc[sector] = weightedSubsectorData;
