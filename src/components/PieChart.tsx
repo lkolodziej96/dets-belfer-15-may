@@ -1,45 +1,57 @@
-import React, { useEffect, useRef } from 'react';
+import { useEffect, useRef, useMemo } from 'react';
 import * as d3 from 'd3';
-import type { CountryData, ViewState } from '../types';
-import {
-  sectorColors,
-  sectorNames,
-  subsectorDefinitions,
-  aiSubsectorColors,
-  quantumSubsectorColors,
-  semiconductorsSubsectorColors,
-  spaceSubsectorColors,
-  biotechSubsectorColors,
-  defaultSpaceSubsectorWeights,
-  defaultBiotechSubsectorWeights,
-  defaultAISubsectorWeights,
-  defaultQuantumSubsectorWeights,
-  defaultSemiconductorsSubsectorWeights,
-} from '../utils/constants';
 
-interface Props {
-  data: CountryData[];
-  selectedSector: string | null;
+import type { Sector } from '@/sectors/sectorDef';
+import { getSubsectorColor } from '@/subsectors/colors';
+import { getSectorColor } from '@/sectors/colors';
+import { getSubsectorLabel } from '@/subsectors/labels';
+import { getSectorLabel } from '@/sectors/labels';
+import { getPercentage } from '@/utils/display';
+
+import type { AggregatedCountryData } from '../types';
+
+export type PieChartProps = {
+  selectedSector: Sector | null;
   selectedCountries: string[];
-  onSectorSelect: (sector: string | null) => void;
-  viewState: ViewState;
-  sectorWeights?: Record<string, number>;
-}
+  selectedSubsector: string | null;
+  onSubSectorSelect: (subsector: string | null) => void;
+  aggregatedData: AggregatedCountryData[];
+};
 
-const PieChart: React.FC<Props> = ({
-  data,
+export default function PieChart({
   selectedSector,
   selectedCountries,
-  onSectorSelect,
-  viewState,
-  sectorWeights = {},
-}) => {
+  selectedSubsector,
+  onSubSectorSelect,
+  aggregatedData,
+}: PieChartProps) {
   const svgRef = useRef<SVGSVGElement>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
+  const subSectorScoresTotal = useMemo(
+    () =>
+      aggregatedData.reduce(
+        (acc, { data, country }) => {
+          if (selectedCountries.length > 0 && !selectedCountries.includes(country)) return acc;
+
+          Object.entries(data).forEach(([subsector, score]) => {
+            acc[subsector] = (acc[subsector] ?? 0) + score;
+          });
+          return acc;
+        },
+        {} as Record<string, number>,
+      ),
+    [aggregatedData, selectedCountries],
+  );
+
+  const totalAllSubSectors = Object.values(subSectorScoresTotal).reduce(
+    (acc, value) => acc + value,
+    0,
+  );
+
   useEffect(() => {
-    if (!svgRef.current || !data.length || !containerRef.current) return;
+    if (!svgRef.current || !containerRef.current) return;
 
     const container = containerRef.current;
     const containerWidth = container.clientWidth;
@@ -50,7 +62,6 @@ const PieChart: React.FC<Props> = ({
 
     const svg = d3.select(svgRef.current);
     svg.selectAll('*').remove();
-
     svg.attr('width', width).attr('height', height);
 
     const g = svg.append('g').attr('transform', `translate(${width / 2},${height / 2})`);
@@ -71,86 +82,8 @@ const PieChart: React.FC<Props> = ({
       .style('min-width', '280px')
       .style('max-width', '320px');
 
-    const filteredData = selectedCountries.length
-      ? data.filter((d) => selectedCountries.includes(d.country))
-      : data;
-
-    const calculateSectorScore = (
-      subsectorData: Record<string, number> = {},
-      weights: Record<string, number>,
-      sectorWeight: number = 1,
-    ) => {
-      return (
-        Object.entries(subsectorData || {}).reduce((total, [key, value]) => {
-          return total + (value ?? 0) * (weights[key] ?? 0);
-        }, 0) * sectorWeight
-      );
-    };
-
-    let pieData;
-    if (viewState.type === 'sector' && viewState.sector) {
-      const subsectorScores = filteredData.reduce(
-        (acc, country) => {
-          const subsectors = country.sectorDetails?.[viewState.sector] ?? {};
-          Object.entries(subsectors || {}).forEach(([subsector, score]) => {
-            const weights =
-              viewState.sector === 'space'
-                ? defaultSpaceSubsectorWeights
-                : viewState.sector === 'biotech'
-                  ? defaultBiotechSubsectorWeights
-                  : viewState.sector === 'ai'
-                    ? defaultAISubsectorWeights
-                    : viewState.sector === 'quantum'
-                      ? defaultQuantumSubsectorWeights
-                      : defaultSemiconductorsSubsectorWeights;
-            acc[subsector] = (acc[subsector] ?? 0) + (score ?? 0) * (weights[subsector] ?? 0);
-          });
-          return acc;
-        },
-        {} as Record<string, number>,
-      );
-
-      if (filteredData.length > 1) {
-        Object.keys(subsectorScores).forEach((key) => {
-          subsectorScores[key] /= filteredData.length;
-        });
-      }
-
-      const validSubsectorData = Object.entries(subsectorScores).filter(([_, value]) => value > 0);
-      pieData =
-        validSubsectorData.length > 0
-          ? d3.pie<[string, number]>().value((d) => d[1])(validSubsectorData)
-          : null;
-    } else {
-      const sectorScores = Object.keys(sectorNames).reduce(
-        (acc, sector) => {
-          const avg =
-            d3.mean(filteredData, (d) => {
-              const sectorDetails = d.sectorDetails?.[sector] ?? {};
-              const weights =
-                sector === 'space'
-                  ? defaultSpaceSubsectorWeights
-                  : sector === 'biotech'
-                    ? defaultBiotechSubsectorWeights
-                    : sector === 'ai'
-                      ? defaultAISubsectorWeights
-                      : sector === 'quantum'
-                        ? defaultQuantumSubsectorWeights
-                        : defaultSemiconductorsSubsectorWeights;
-
-              return calculateSectorScore(sectorDetails, weights, sectorWeights[sector] ?? 0);
-            }) || 0;
-          return { ...acc, [sector]: avg };
-        },
-        {} as Record<string, number>,
-      );
-
-      const validSectorData = Object.entries(sectorScores).filter(([_, value]) => value > 0);
-      pieData =
-        validSectorData.length > 0
-          ? d3.pie<[string, number]>().value((d) => d[1])(validSectorData)
-          : null;
-    }
+    const d3Data = Object.entries(subSectorScoresTotal);
+    const pieData = d3.pie<[string, number]>().value((d) => d[1])(d3Data);
 
     // If there's no data to display, show a message
     if (!pieData || pieData.length === 0) {
@@ -185,82 +118,48 @@ const PieChart: React.FC<Props> = ({
         return normalArc(d) || '';
       })
       .attr('fill', (d) => {
-        if (!d?.data?.[0]) return '#e2e8f0';
+        const subsector = d.data[0];
+        if (!subsector) return '#e2e8f0';
+        const color = selectedSector
+          ? getSubsectorColor(selectedSector, subsector)
+          : getSectorColor(subsector as Sector);
 
-        if (viewState.type === 'sector' && viewState.sector) {
-          if (viewState.sector === 'space') {
-            return (
-              spaceSubsectorColors[d.data[0] as keyof typeof spaceSubsectorColors] || '#e2e8f0'
-            );
-          } else if (viewState.sector === 'biotech') {
-            return (
-              biotechSubsectorColors[d.data[0] as keyof typeof biotechSubsectorColors] || '#e2e8f0'
-            );
-          } else if (viewState.sector === 'ai') {
-            return aiSubsectorColors[d.data[0] as keyof typeof aiSubsectorColors] || '#e2e8f0';
-          } else if (viewState.sector === 'quantum') {
-            return (
-              quantumSubsectorColors[d.data[0] as keyof typeof quantumSubsectorColors] || '#e2e8f0'
-            );
-          } else if (viewState.sector === 'semiconductors') {
-            return (
-              semiconductorsSubsectorColors[
-                d.data[0] as keyof typeof semiconductorsSubsectorColors
-              ] || '#e2e8f0'
-            );
-          }
-        }
-        return sectorColors[d.data[0]] || '#e2e8f0';
+        return color;
       })
       .attr('stroke', (d) => {
         if (!d?.data?.[0]) return 'white';
-        return selectedSector === d.data[0] ? '#1A202C' : 'white';
+        return selectedSubsector === d.data[0] ? '#1A202C' : 'white';
       })
       .style('stroke-width', (d) => {
         if (!d?.data?.[0]) return '1px';
-        return selectedSector === d.data[0] ? '3px' : '2px';
+        return selectedSubsector === d.data[0] ? '3px' : '2px';
       })
       .style('cursor', 'pointer')
       .style('opacity', (d) => {
         if (!d?.data?.[0]) return 0.3;
-        return selectedSector === d.data[0] ? 1 : selectedSector ? 0.3 : 1;
+        return selectedSubsector === d.data[0] ? 1 : selectedSubsector ? 0.3 : 1;
       })
       .style('filter', (d) => {
         if (!d?.data?.[0]) return 'none';
-        return selectedSector === d.data[0] ? 'drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1))' : 'none';
+        return selectedSubsector === d.data[0]
+          ? 'drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1))'
+          : 'none';
       });
 
     segments
       .on('mouseover', (event, d) => {
         if (!d?.data?.[0] || !d.data[1]) return;
 
-        const sector = d.data[0];
+        const subSector = d.data[0];
         const value = d.data[1];
 
-        const name =
-          viewState.type === 'sector' && viewState.sector && sector
-            ? subsectorDefinitions[viewState.sector]?.[sector] || sector
-            : sectorNames[sector] || sector;
+        const name = selectedSector
+          ? getSubsectorLabel(selectedSector, subSector)
+          : getSectorLabel(subSector as Sector);
 
-        const getPercentage = (value: number) => {
-          const total = pieData.reduce((sum, d) => sum + (d.data?.[1] || 0), 0);
-          return ((value / total) * 100).toFixed(1);
-        };
-
-        const color =
-          viewState.type === 'sector' && viewState.sector
-            ? viewState.sector === 'space'
-              ? spaceSubsectorColors[sector as keyof typeof spaceSubsectorColors]
-              : viewState.sector === 'biotech'
-                ? biotechSubsectorColors[sector as keyof typeof biotechSubsectorColors]
-                : viewState.sector === 'ai'
-                  ? aiSubsectorColors[sector as keyof typeof aiSubsectorColors]
-                  : viewState.sector === 'quantum'
-                    ? quantumSubsectorColors[sector as keyof typeof quantumSubsectorColors]
-                    : semiconductorsSubsectorColors[
-                        sector as keyof typeof semiconductorsSubsectorColors
-                      ]
-            : sectorColors[sector];
+        const color = selectedSector
+          ? getSubsectorColor(selectedSector, subSector)
+          : getSectorColor(subSector as Sector);
 
         const tooltipContent = `
           <div style="border-left: 4px solid ${color || '#e2e8f0'}; padding-left: 12px;">
@@ -270,13 +169,13 @@ const PieChart: React.FC<Props> = ({
             <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 4px;">
               <span style="color: #4A5568; font-size: 14px;">Score</span>
               <span style="font-weight: 600; color: #2D3748; font-size: 15px;">
-                ${viewState.type === 'main' ? (value * 100).toFixed(1) : value.toFixed(3)}
+                ${getPercentage(value)}
               </span>
             </div>
             <div style="display: flex; justify-content: space-between; align-items: baseline;">
               <span style="color: #4A5568; font-size: 14px;">Share</span>
               <span style="font-weight: 600; color: #2D3748; font-size: 15px;">
-                ${getPercentage(value)}%
+                ${getPercentage(value / totalAllSubSectors)}%
               </span>
             </div>
           </div>
@@ -303,10 +202,14 @@ const PieChart: React.FC<Props> = ({
           .duration(200)
           .attr('d', (d) => {
             // Ensure d is valid before calling selectedArc
-            if (!d || typeof d.startAngle === 'undefined' || typeof d.endAngle === 'undefined') {
+            if (
+              !d ||
+              typeof (d as any).startAngle === 'undefined' ||
+              typeof (d as any).endAngle === 'undefined'
+            ) {
               return '';
             }
-            return selectedArc(d) || '';
+            return selectedArc(d as any) || '';
           })
           .style('opacity', 1)
           .style('stroke', '#1A202C')
@@ -344,54 +247,66 @@ const PieChart: React.FC<Props> = ({
           .duration(200)
           .attr('d', (d) => {
             // Ensure d is valid before calling normalArc
-            if (!d || typeof d.startAngle === 'undefined' || typeof d.endAngle === 'undefined') {
+            if (
+              !d ||
+              typeof (d as any).startAngle === 'undefined' ||
+              typeof (d as any).endAngle === 'undefined'
+            ) {
               return '';
             }
-            return normalArc(d) || '';
+            return normalArc(d as any) || '';
           })
-          .style('opacity', selectedSector === d.data[0] ? 1 : selectedSector ? 0.3 : 1)
-          .style('stroke', selectedSector === d.data[0] ? '#1A202C' : 'white')
-          .style('stroke-width', selectedSector === d.data[0] ? '3px' : '2px')
+          .style('opacity', selectedSubsector === d.data[0] ? 1 : selectedSubsector ? 0.3 : 1)
+          .style('stroke', selectedSubsector === d.data[0] ? '#1A202C' : 'white')
+          .style('stroke-width', selectedSubsector === d.data[0] ? '3px' : '2px')
           .style(
             'filter',
-            selectedSector === d.data[0] ? 'drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1))' : 'none',
+            selectedSubsector === d.data[0] ? 'drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1))' : 'none',
           );
       })
-      .on('click', (event, d) => {
+      .on('click', (_, d) => {
         if (!d?.data?.[0]) return;
 
-        const sector = d.data[0];
-        const isSelected = selectedSector === sector;
+        const subSector = d.data[0];
+        const isSelected = selectedSubsector === subSector;
 
-        onSectorSelect(isSelected ? null : sector);
+        onSubSectorSelect(isSelected ? null : subSector);
 
         d3.selectAll('path')
           .transition()
           .duration(200)
           .attr('d', (p) => {
             // Ensure p is valid before calling arc functions
-            if (!p || typeof p.startAngle === 'undefined' || typeof p.endAngle === 'undefined') {
+            if (
+              !p ||
+              typeof (p as any).startAngle === 'undefined' ||
+              typeof (p as any).endAngle === 'undefined'
+            ) {
               return '';
             }
-            return (isSelected ? false : p.data[0] === sector)
-              ? selectedArc(p) || ''
-              : normalArc(p) || '';
+            return (isSelected ? false : (p as any).data[0] === subSector)
+              ? selectedArc(p as any) || ''
+              : normalArc(p as any) || '';
           })
           .style('opacity', (p) => {
-            if (!p?.data?.[0]) return 0.3;
-            return (isSelected ? false : p.data[0] === sector) ? 1 : isSelected ? 1 : 0.3;
+            if (!(p as any)?.data?.[0]) return 0.3;
+            return (isSelected ? false : (p as any).data[0] === subSector)
+              ? 1
+              : isSelected
+                ? 1
+                : 0.3;
           })
           .style('stroke', (p) => {
-            if (!p?.data?.[0]) return 'white';
-            return (isSelected ? false : p.data[0] === sector) ? '#1A202C' : 'white';
+            if (!(p as any)?.data?.[0]) return 'white';
+            return (isSelected ? false : (p as any).data[0] === subSector) ? '#1A202C' : 'white';
           })
           .style('stroke-width', (p) => {
-            if (!p?.data?.[0]) return '1px';
-            return (isSelected ? false : p.data[0] === sector) ? '3px' : '2px';
+            if (!(p as any)?.data?.[0]) return '1px';
+            return (isSelected ? false : (p as any).data[0] === subSector) ? '3px' : '2px';
           })
           .style('filter', (p) => {
-            if (!p?.data?.[0]) return 'none';
-            return (isSelected ? false : p.data[0] === sector)
+            if (!(p as any)?.data?.[0]) return 'none';
+            return (isSelected ? false : (p as any).data[0] === subSector)
               ? 'drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1))'
               : 'none';
           });
@@ -423,7 +338,7 @@ const PieChart: React.FC<Props> = ({
 
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-  }, [data, selectedSector, selectedCountries, onSectorSelect, viewState, sectorWeights]);
+  }, [selectedSubsector, selectedCountries, onSubSectorSelect]);
 
   return (
     <div ref={containerRef} className="relative" style={{ width: '100%', height: '400px' }}>
@@ -431,6 +346,4 @@ const PieChart: React.FC<Props> = ({
       <div ref={tooltipRef} />
     </div>
   );
-};
-
-export default PieChart;
+}

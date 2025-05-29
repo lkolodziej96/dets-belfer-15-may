@@ -93,6 +93,7 @@ function applyWeightsToSubsectorData(
 
 export default function App() {
   const [selectedSector, setSelectedSector] = useState<Sector | null>(null);
+  const [selectedSubsector, setSelectedSubsector] = useState<string | null>(null);
   const [weights, setWeights] = useImmer<Weights>(getDefaultWeights);
   const weightedSubSectorDataPerCountry: WeightedSubSectorCountryData[] = useMemo(
     () =>
@@ -155,7 +156,39 @@ export default function App() {
 
   debug('totalCountryScores')(totalCountryScores);
 
-  const [data, setData] = useState<CountryData[]>(mainData);
+  const countrySectorTotalLookup = useMemo(() => {
+    return totalSectorScoresPerCountry.reduce(
+      (acc, { country, sectors }) => {
+        acc[country] = sectors;
+        return acc;
+      },
+      {} as Record<string, Record<string, number>>,
+    );
+  }, [totalSectorScoresPerCountry]);
+
+  const countryTotalLookup = useMemo(
+    () =>
+      totalCountryScores.reduce(
+        (acc, { country, score }) => {
+          acc[country] = score;
+          return acc;
+        },
+        {} as Record<string, number>,
+      ),
+    [totalCountryScores],
+  );
+
+  const aggregatedData = useMemo(
+    () =>
+      weightedSubSectorDataPerCountry.map(({ country, sectors }) => ({
+        country,
+        data: selectedSector ? sectors[selectedSector] : countrySectorTotalLookup[country],
+        total: countryTotalLookup[country],
+      })),
+    [weightedSubSectorDataPerCountry, selectedSector, countrySectorTotalLookup],
+  );
+
+  debug('aggregatedData')(aggregatedData);
 
   const [selectedCountries, setSelectedCountries] = useState<string[]>([]);
 
@@ -286,14 +319,13 @@ export default function App() {
               {/* Pie Chart (2 columns) */}
               <div className="col-span-2 overflow-hidden rounded-xl border border-gray-100 bg-white p-8 shadow-lg">
                 <div className="relative" style={{ height: '400px' }}>
-                  {/* <PieChart
-                    data={data}
+                  <PieChart
                     selectedSector={selectedSector}
                     selectedCountries={selectedCountries}
-                    onSectorSelect={handleSectorSelect}
-                    viewState={viewState}
-                    sectorWeights={sectorWeights}
-                  /> */}
+                    aggregatedData={aggregatedData}
+                    onSubSectorSelect={setSelectedSubsector}
+                    selectedSubsector={selectedSubsector}
+                  />
                 </div>
               </div>
             </div>
