@@ -305,14 +305,13 @@ export default function App() {
             <div className="grid grid-cols-5 gap-8">
               {/* World Map (3 columns) */}
               <div className="col-span-3 rounded-xl border border-gray-100 bg-white p-8 shadow-lg">
-                {/* <WorldMap
-                  data={data}
+                <WorldMap
                   selectedSector={selectedSector}
                   selectedCountries={selectedCountries}
                   onCountrySelect={handleCountrySelect}
-                  // viewState={viewState}
-                  // sectorWeights={sectorWeights}
-                /> */}
+                  aggregatedData={aggregatedData}
+                  selectedSubsector={selectedSubsector}
+                />
               </div>
 
               {/* Pie Chart (2 columns) */}
