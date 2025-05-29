@@ -9,11 +9,10 @@ import type { Sector } from '@/sectors/sectorDef';
 function applyWeightsToSubsectorData(
   subsectorData: Record<string, number>,
   weights: Record<string, number>,
-  sectorWeight: number,
 ): Record<string, number> {
   return Object.entries(subsectorData).reduce(
     (acc, [key, value]) => {
-      acc[key] = value * weights[key] * sectorWeight;
+      acc[key] = value * weights[key];
       return acc;
     },
     {} as Record<string, number>,
@@ -42,7 +41,6 @@ export function useDataPipeline({
               const weightedSubsectorData = applyWeightsToSubsectorData(
                 subSectorData,
                 correctWeights,
-                weights.overall[sector],
               );
 
               acc[sector] = weightedSubsectorData;
@@ -67,14 +65,16 @@ export function useDataPipeline({
             const sector = _sector as Sector;
             const sectorScore = Object.values(subsectorData).reduce((sum, score) => sum + score, 0);
 
-            acc[sector] = sectorScore;
+            const overviewMultiplayer = selectedSector ? 1 : weights.overall[sector];
+
+            acc[sector] = sectorScore * overviewMultiplayer;
             return acc;
           },
           {} as Record<Sector, number>,
         ),
       };
     });
-  }, [weightedSubSectorDataPerCountry]);
+  }, [weightedSubSectorDataPerCountry, selectedSector, weights.overall]);
 
   debug('totalSectorScoresPerCountry')(totalSectorScoresPerCountry);
 
