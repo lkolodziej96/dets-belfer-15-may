@@ -83,7 +83,6 @@ export default function BarChart({
         })),
     [weightedSubSectorDataPerCountry, selectedSector, countrySectorTotalLookup, countryTotalLookup],
   );
-  console.log(JSON.stringify(chartData, null, 2));
 
   const generateTooltipContent = useCallback(
     (d: any) => {
@@ -291,10 +290,8 @@ export default function BarChart({
       .attr('width', (d) =>
         selectedCountries.includes(d.data.country) ? selectedWidth : normalWidth,
       )
-      .style('opacity', (d, i, nodes) => {
-        const key = chartItemKeys[(d3.select((nodes[i] as any).parentNode).datum() as any).index];
+      .style('opacity', (d) => {
         if (selectedCountries.length && !selectedCountries.includes(d.data.country)) return 0.3;
-        if (selectedSector && key !== selectedSector) return 0.3;
         return 1;
       });
 
@@ -302,7 +299,7 @@ export default function BarChart({
     layerGroupsMerge
       .selectAll('rect')
       .style('cursor', 'pointer')
-      .on('click', (event, d) => {
+      .on('click', (_, d) => {
         const country = (d as any).data.country;
         onCountrySelect(
           selectedCountries.includes(country)

@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { useImmer } from 'use-immer';
 import debug from 'debug';
 
@@ -90,8 +90,6 @@ function applyWeightsToSubsectorData(
     {} as Record<string, number>,
   );
 }
-
-console.log(mainData);
 
 export default function App() {
   const [selectedSector, setSelectedSector] = useState<Sector | null>(null);
@@ -228,7 +226,7 @@ export default function App() {
       </div>
       <SectorNav
         currentSector={selectedSector}
-        onSectorChange={(newSector) => setSelectedSector(newSector)}
+        onSectorChange={(newSector) => handleSectorNavClick(newSector)}
       />
 
       <div className="px-8 py-8">
