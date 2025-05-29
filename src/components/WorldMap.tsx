@@ -3,14 +3,19 @@ import * as d3 from 'd3';
 import { feature } from 'topojson-client';
 import Select from 'react-select';
 import { ZoomIn, ZoomOut, RotateCcw } from 'lucide-react';
-import type { AggregatedCountryData, CountryOption } from '../types';
-import { calculateColorIntensity } from '../utils/dataProcessing';
+import type { AggregatedCountryData } from '@/data/types';
+import { calculateColorIntensity } from '@/utils/dataProcessing';
 import type { Sector } from '@/sectors/sectorDef';
 import { getSectorColor } from '@/sectors/colors';
 import { theme } from '@/theme';
 import { getSubsectorLabel } from '@/subsectors/labels';
 import { getSectorLabel } from '@/sectors/labels';
 import { getPercentage } from '@/utils/display';
+
+type CountryOption = {
+  value: string;
+  label: string;
+};
 
 // Map for converting between world map country names and data country names
 const countryNameMap = {
@@ -433,7 +438,7 @@ export default function WorldMap({
         zoomToCountries(selectedCountries);
       }
     });
-  }, [mapData, countryData]);
+  }, [mapData, countryData, selectedCountries, selectedSector, onCountrySelect, zoomToCountries]);
 
   const handleZoom = (action: 'in' | 'out' | 'reset') => {
     if (!svgRef.current || !zoomRef.current) return;

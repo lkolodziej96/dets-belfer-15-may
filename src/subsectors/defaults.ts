@@ -1,11 +1,9 @@
-import type { Sector } from '@/sectors/sectorDef';
-import {
-  getSubsectorList,
-  type AISubsectors,
-  type BiotechnologySubsectors,
-  type QuantumSubsectors,
-  type SemiconductorsSubsectors,
-  type SpaceSubsectors,
+import type {
+  AISubsectors,
+  BiotechnologySubsectors,
+  QuantumSubsectors,
+  SemiconductorsSubsectors,
+  SpaceSubsectors,
 } from '@/subsectors/subsectorsDef';
 
 const AI_DEFAULT_SUBSECTOR_WEIGHTS = {

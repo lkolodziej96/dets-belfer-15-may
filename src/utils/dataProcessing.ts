@@ -1,64 +1,6 @@
-import type { CountryData, SectorWeights } from '../types';
-import { validateAndProcessData, standardizeCountryNames } from './dataValidation';
-import { subsectorDefinitions } from './constants';
 import type { Sector } from '@/sectors/sectorDef';
 import { theme } from '@/theme';
 import { getSectorColor } from '@/sectors/colors';
-
-export function processExcelData(rawData: any[], weights: SectorWeights): CountryData[] {
-  try {
-    // First validate and process the raw data
-    const { data: validatedData, validation } = validateAndProcessData(rawData);
-
-    if (!validation.isValid) {
-      if (validation.errors.length > 0) {
-        console.log('Data validation failed:', validation.errors);
-      }
-      if (validation.warnings.length > 0) {
-        console.log('Validation warnings:', validation.warnings);
-      }
-      return [];
-    }
-
-    // Standardize country names
-    const standardizedData = standardizeCountryNames(validatedData);
-
-    // Apply weights and calculate scores
-    return standardizedData.map((country) => {
-      const sectorScores = {
-        ai: parseFloat(country.ai) * weights.ai,
-        quantum: parseFloat(country.quantum) * weights.quantum,
-        semiconductors: parseFloat(country.semiconductors) * weights.semiconductors,
-        biotech: parseFloat(country.biotech) * weights.biotech,
-        space: parseFloat(country.space) * weights.space,
-      };
-
-      // Process subsector data
-      const sectorDetails: { [key: string]: { [subsector: string]: number } } = {};
-
-      // For each sector that has subsectors defined
-      Object.entries(subsectorDefinitions).forEach(([sector, subsectors]) => {
-        sectorDetails[sector] = {};
-        Object.keys(subsectors).forEach((subsector) => {
-          const columnName = `${sector}_${subsector}`;
-          sectorDetails[sector][subsector] = country[columnName] || 0;
-        });
-      });
-
-      const totalScore = Object.values(sectorScores).reduce((sum, score) => sum + score, 0);
-
-      return {
-        ...country,
-        totalScore,
-        sectorScores,
-        sectorDetails,
-      };
-    });
-  } catch (error) {
-    console.log('Error processing data:', error);
-    return [];
-  }
-}
 
 export function calculateColorIntensity(
   value: number,

@@ -1,5 +1,13 @@
-import type { CountryData } from '../types';
 import data from './data.xlsx?embed';
+
+type CountryData = {
+  country: string;
+  sectorDetails: {
+    [key: string]: {
+      [subsector: string]: number;
+    };
+  };
+};
 
 function renameSheetName(sheetName: string) {
   if (/semicon/i.test(sheetName)) {

@@ -8,7 +8,7 @@ import { getSubsectorLabel } from '@/subsectors/labels';
 import { getSectorLabel } from '@/sectors/labels';
 import { getPercentage } from '@/utils/display';
 
-import type { AggregatedCountryData } from '../types';
+import type { AggregatedCountryData } from '@/data/types';
 
 export type PieChartProps = {
   selectedSector: Sector | null;
@@ -338,7 +338,14 @@ export default function PieChart({
 
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-  }, [selectedSubsector, selectedCountries, onSubSectorSelect]);
+  }, [
+    selectedSubsector,
+    selectedCountries,
+    onSubSectorSelect,
+    totalAllSubSectors,
+    selectedSector,
+    subSectorScoresTotal,
+  ]);
 
   return (
     <div ref={containerRef} className="relative" style={{ width: '100%', height: '400px' }}>

@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import type { AggregatedCountryData } from '../types';
+import type { AggregatedCountryData } from '@/data/types';
 import { calculateColorIntensity } from '../utils/dataProcessing';
 import { getSectorList, type Sector } from '@/sectors/sectorDef';
 import { getSectorColor } from '@/sectors/colors';

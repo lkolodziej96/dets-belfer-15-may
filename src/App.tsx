@@ -21,7 +21,7 @@ import { theme } from '@/theme';
 import { getSectorLabel } from '@/sectors/labels';
 import { getSubsectorLabel } from '@/subsectors/labels';
 import { useDataPipeline } from '@/data/useDataPieline';
-import type { Weights } from '@/types';
+import type { Weights } from '@/data/types';
 
 function getDefaultWeights(): Weights {
   return {

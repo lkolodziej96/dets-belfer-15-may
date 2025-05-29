@@ -2,7 +2,7 @@ import debug from 'debug';
 import { useMemo } from 'react';
 
 import { mainData } from '@/data/mainData';
-import type { AggregatedCountryData, Weights } from '@/types';
+import type { AggregatedCountryData, Weights } from '@/data/types';
 import type { Sector } from '@/sectors/sectorDef';
 
 function applyWeightsToSubsectorData(
@@ -50,7 +50,7 @@ export function useDataPipeline({
           ),
         };
       }),
-    [mainData, weights],
+    [weights],
   );
 
   debug('weightedSubSectorDataPerCountry')(weightedSubSectorDataPerCountry);
@@ -71,7 +71,7 @@ export function useDataPipeline({
         ),
       };
     });
-  }, [weightedSubSectorDataPerCountry]);
+  }, [weightedSubSectorDataPerCountry, weights.overall]);
 
   debug('totalSectorScoresPerCountry')(totalSectorScoresPerCountry);
 
@@ -117,7 +117,7 @@ export function useDataPipeline({
         data: selectedSector ? sectors[selectedSector] : countrySectorTotalLookup[country],
         total: countryTotalLookup[country],
       })),
-    [weightedSubSectorDataPerCountry, selectedSector, countrySectorTotalLookup],
+    [weightedSubSectorDataPerCountry, selectedSector, countrySectorTotalLookup, countryTotalLookup],
   );
 
   debug('aggregatedData')(aggregatedData);

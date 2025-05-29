@@ -1,6 +1,6 @@
 import * as d3 from 'd3';
 import { useEffect, useRef, useMemo, useCallback } from 'react';
-import type { AggregatedCountryData } from '../types';
+import type { AggregatedCountryData } from '@/data/types';
 
 import { getSubsectorList } from '@/subsectors/subsectorsDef';
 import { getSectorList, type Sector } from '@/sectors/sectorDef';
@@ -49,7 +49,7 @@ export default function BarChart({
             {} as Record<string, number>,
           ),
         })),
-    [aggregatedData, selectedSector],
+    [aggregatedData],
   );
 
   const generateTooltipContent = useCallback(
@@ -311,7 +311,15 @@ export default function BarChart({
           })
           .style('filter', 'none');
       });
-  }, [selectedSubsector, selectedCountries, onCountrySelect, chartData, generateTooltipContent]);
+  }, [
+    selectedSubsector,
+    selectedCountries,
+    onCountrySelect,
+    chartData,
+    generateTooltipContent,
+    chartItemKeys,
+    selectedSector,
+  ]);
 
   return (
     <div ref={containerRef} className="relative">
