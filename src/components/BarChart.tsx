@@ -8,7 +8,6 @@ import type { Sector } from '@/sectors/sectorDef';
 import { getSectorList } from '@/sectors/sectorDef';
 import { getSubsectorColor } from '@/subsectors/colors';
 import { getSubsectorLabel } from '@/subsectors/labels';
-import { getSubsectorList } from '@/subsectors/subsectorsDef';
 import { getPercentage } from '@/utils/display';
 
 export type BarChartProps = {
@@ -292,18 +291,18 @@ export default function BarChart({
           .style('filter', 'drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1))');
       })
       .on('mousemove', (event) => {
-        const rect = event.currentTarget.getBoundingClientRect();
+        const [mouseX, mouseY] = d3.pointer(event, document.body);
         const tooltipNode = tooltipRef.current!;
         const tooltipRect = tooltipNode.getBoundingClientRect();
         
-        // Position tooltip to the right of the bar with a small offset
-        let left = rect.right + 5;
-        let top = event.clientY - tooltipRect.height / 2;
+        // Position tooltip next to the mouse cursor with a small offset
+        let left = mouseX + 16;
+        let top = mouseY - tooltipRect.height / 2;
 
         // Check if tooltip would go off the right edge of the screen
         if (left + tooltipRect.width > window.innerWidth) {
-          // Position tooltip to the left of the bar instead
-          left = rect.left - tooltipRect.width - 5;
+          // Position tooltip to the left of the cursor instead
+          left = mouseX - tooltipRect.width - 16;
         }
 
         // Ensure tooltip stays within vertical bounds
@@ -317,9 +316,8 @@ export default function BarChart({
           .style('left', `${left}px`)
           .style('top', `${top}px`);
       })
-      .on('mouseout', (event, d) => {
+      .on('mouseout', (event) => {
         tooltip.style('visibility', 'hidden');
-
         d3.select(event.currentTarget)
           .transition()
           .duration(200)
