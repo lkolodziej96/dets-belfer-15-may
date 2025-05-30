@@ -8,7 +8,6 @@ import { getSectorLabel } from '@/sectors/labels';
 import { getSectorList, type Sector } from '@/sectors/sectorDef';
 import { getSubsectorColor } from '@/subsectors/colors';
 import { getSubsectorLabel } from '@/subsectors/labels';
-import { getSubsectorList } from '@/subsectors/subsectorsDef';
 import { getPercentage } from '@/utils/display';
 
 export type BarChartProps = {
@@ -165,7 +164,7 @@ export default function BarChart({
       xAxis
         .transition()
         .duration(750)
-        .call(d3.axisBottom(x) as never) // TODO: fix this
+        .call(d3.axisBottom(x) as never)
         .selectAll('text')
         .attr('transform', 'rotate(-45)')
         .style('text-anchor', 'end')
@@ -189,7 +188,7 @@ export default function BarChart({
       yAxis
         .transition()
         .duration(750)
-        .call(d3.axisLeft(y).ticks(8) as never) // TODO: fix this
+        .call(d3.axisLeft(y).ticks(8) as never)
         .selectAll('text')
         .style('font-family', "'Inter', 'Helvetica', 'Arial', sans-serif")
         .style('font-size', '11px')
@@ -292,8 +291,30 @@ export default function BarChart({
           .style('filter', 'drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1))');
       })
       .on('mousemove', (event) => {
-        const [mouseX, mouseY] = d3.pointer(event, document.body);
-        tooltip.style('left', `${mouseX + 16}px`).style('top', `${mouseY}px`);
+        const rect = event.currentTarget.getBoundingClientRect();
+        const tooltipNode = tooltipRef.current!;
+        const tooltipRect = tooltipNode.getBoundingClientRect();
+        
+        // Position tooltip to the right of the bar with a small offset
+        let left = rect.right + 5;
+        let top = event.clientY - tooltipRect.height / 2;
+
+        // Check if tooltip would go off the right edge of the screen
+        if (left + tooltipRect.width > window.innerWidth) {
+          // Position tooltip to the left of the bar instead
+          left = rect.left - tooltipRect.width - 5;
+        }
+
+        // Ensure tooltip stays within vertical bounds
+        if (top < 0) {
+          top = 0;
+        } else if (top + tooltipRect.height > window.innerHeight) {
+          top = window.innerHeight - tooltipRect.height;
+        }
+
+        tooltip
+          .style('left', `${left}px`)
+          .style('top', `${top}px`);
       })
       .on('mouseout', (event, d) => {
         tooltip.style('visibility', 'hidden');
