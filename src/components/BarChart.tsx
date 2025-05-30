@@ -5,9 +5,9 @@ import type { AggregatedCountryData } from '@/data/types';
 import { getSectorColor } from '@/sectors/colors';
 import { getSectorLabel } from '@/sectors/labels';
 import type { Sector } from '@/sectors/sectorDef';
-import { getSectorList } from '@/sectors/sectorDef';
 import { getSubsectorColor } from '@/subsectors/colors';
 import { getSubsectorLabel } from '@/subsectors/labels';
+import { getSubsectorList } from '@/subsectors/subsectorsDef';
 import { getPercentage } from '@/utils/display';
 
 export type BarChartProps = {
@@ -164,7 +164,7 @@ export default function BarChart({
       xAxis
         .transition()
         .duration(750)
-        .call(d3.axisBottom(x) as never)
+        .call(d3.axisBottom(x))
         .selectAll('text')
         .attr('transform', 'rotate(-45)')
         .style('text-anchor', 'end')
@@ -188,7 +188,7 @@ export default function BarChart({
       yAxis
         .transition()
         .duration(750)
-        .call(d3.axisLeft(y).ticks(8) as never)
+        .call(d3.axisLeft(y).ticks(8))
         .selectAll('text')
         .style('font-family', "'Inter', 'Helvetica', 'Arial', sans-serif")
         .style('font-size', '11px')
@@ -201,18 +201,19 @@ export default function BarChart({
     // Create tooltip
     const tooltip = d3
       .select(tooltipRef.current)
-      .style('position', 'absolute')
+      .style('position', 'fixed')
       .style('visibility', 'hidden')
       .style('background-color', 'white')
-      .style('padding', '12px')
-      .style('border', '1px solid #ddd')
-      .style('border-radius', '6px')
-      .style('box-shadow', '0 4px 12px rgba(0, 0, 0, 0.15)')
+      .style('padding', '16px')
+      .style('border', '1px solid #E2E8F0')
+      .style('border-radius', '8px')
+      .style('box-shadow', '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)')
       .style('pointer-events', 'none')
       .style('font-family', "'Inter', 'Helvetica', 'Arial', sans-serif")
       .style('font-size', '14px')
-      .style('z-index', '1000')
-      .style('min-width', '220px');
+      .style('z-index', '9999')
+      .style('min-width', '280px')
+      .style('max-width', '320px');
 
     // Update stacked bars
     const layerGroups = g.selectAll('g.layer').data(layers);
@@ -321,7 +322,7 @@ export default function BarChart({
         d3.select(event.currentTarget)
           .transition()
           .duration(200)
-          .attr('x', x((d as any).data.country)!)
+          .attr('x', (d) => x((d as any).data.country)!)
           .attr('width', normalWidth)
           .style('opacity', (d, i, nodes) => {
             const key =
