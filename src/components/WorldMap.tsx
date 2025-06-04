@@ -287,8 +287,8 @@ export default function WorldMap({
           .attr('fill', () =>
             calculateColorIntensity(singaporeData.total, maxScore, selectedSector),
           )
-          .attr('stroke', '#cbd5e0')
-          .attr('stroke-width', selectedCountries.includes('Singapore') ? 2 : 0.5)
+          .attr('stroke', '#64748b')
+          .attr('stroke-width', selectedCountries.includes('Singapore') ? 3 : 1)
           .style(
             'opacity',
             selectedCountries.length && !selectedCountries.includes('Singapore') ? 0.5 : 1,
@@ -308,7 +308,7 @@ export default function WorldMap({
             d3.select(event.currentTarget)
               .transition()
               .duration(200)
-              .attr('stroke-width', '2')
+              .attr('stroke-width', '3')
               .attr('stroke', '#4A5568');
           })
           .on('mousemove', (event) => {
@@ -333,8 +333,8 @@ export default function WorldMap({
             d3.select(event.currentTarget)
               .transition()
               .duration(200)
-              .attr('stroke-width', selectedCountries.includes('Singapore') ? 2 : 0.5)
-              .attr('stroke', '#cbd5e0');
+              .attr('stroke-width', selectedCountries.includes('Singapore') ? 3 : 1)
+              .attr('stroke', '#64748b');
           });
       }
 
@@ -352,13 +352,13 @@ export default function WorldMap({
 
           return calculateColorIntensity(countryData.total, maxScore, selectedSector);
         })
-        .attr('stroke', '#cbd5e0')
+        .attr('stroke', '#64748b')
         .attr('stroke-width', (d: any) => {
           const countryName = d.properties.name;
           const mappedName =
             countryNameMap[countryName as keyof typeof countryNameMap] || countryName;
           const isSelected = selectedCountries.includes(mappedName);
-          return isSelected ? 2 : 0.5;
+          return isSelected ? 3 : 1;
         })
         .style('opacity', (d: any) => {
           if (!selectedCountries.length) return 1;
@@ -392,7 +392,7 @@ export default function WorldMap({
             d3.select(event.currentTarget)
               .transition()
               .duration(200)
-              .attr('stroke-width', '2')
+              .attr('stroke-width', '3')
               .attr('stroke', '#4A5568');
           }
         })
@@ -423,9 +423,9 @@ export default function WorldMap({
               const mappedName =
                 countryNameMap[countryName as keyof typeof countryNameMap] || countryName;
               const isSelected = selectedCountries.includes(mappedName);
-              return isSelected ? 2 : 0.5;
+              return isSelected ? 3 : 1;
             })
-            .attr('stroke', '#cbd5e0');
+            .attr('stroke', '#64748b');
         });
 
       const zoom = d3
