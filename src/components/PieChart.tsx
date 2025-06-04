@@ -414,7 +414,7 @@ export default function PieChart({
           }}
         >
           <div className="absolute -top-1 left-1/2 h-2 w-2 -translate-x-1/2 rotate-45 bg-gray-900"></div>
-          This chart shows the distribution of scores across different subsectors for the selected countries and sector.
+          This chart shows the distribution of scores across different sectors & subsectors for the selected countries.
         </div>
       )}
     </div>
