@@ -1,4 +1,4 @@
-import { useEffect, useRef, useMemo } from 'react';
+import { useEffect, useRef, useMemo, useState } from 'react';
 
 import * as d3 from 'd3';
 import { Info } from 'lucide-react';
@@ -28,7 +28,10 @@ export default function PieChart({
 }: PieChartProps) {
   const svgRef = useRef<SVGSVGElement>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);
+  const infoTooltipRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const [showInfoTooltip, setShowInfoTooltip] = useState(false);
+  const [infoTooltipPosition, setInfoTooltipPosition] = useState({ x: 0, y: 0 });
 
   const subSectorScoresTotal = useMemo(
     () =>
@@ -50,6 +53,42 @@ export default function PieChart({
     (acc, value) => acc + value,
     0,
   );
+
+  const handleInfoIconMouseEnter = (event: React.MouseEvent) => {
+    const rect = event.currentTarget.getBoundingClientRect();
+    setInfoTooltipPosition({
+      x: rect.left + rect.width / 2,
+      y: rect.bottom + 8,
+    });
+    setShowInfoTooltip(true);
+  };
+
+  const handleInfoIconMouseMove = (event: React.MouseEvent) => {
+    if (!infoTooltipRef.current) return;
+
+    const rect = event.currentTarget.getBoundingClientRect();
+    const tooltipRect = infoTooltipRef.current.getBoundingClientRect();
+    
+    let x = rect.left + rect.width / 2;
+    let y = rect.bottom + 8;
+
+    // Ensure tooltip stays within viewport
+    if (x + tooltipRect.width / 2 > window.innerWidth) {
+      x = window.innerWidth - tooltipRect.width / 2;
+    } else if (x - tooltipRect.width / 2 < 0) {
+      x = tooltipRect.width / 2;
+    }
+
+    if (y + tooltipRect.height > window.innerHeight) {
+      y = rect.top - tooltipRect.height - 8;
+    }
+
+    setInfoTooltipPosition({ x, y });
+  };
+
+  const handleInfoIconMouseLeave = () => {
+    setShowInfoTooltip(false);
+  };
 
   useEffect(() => {
     if (!svgRef.current || !containerRef.current) return;
@@ -352,19 +391,32 @@ export default function PieChart({
     <div ref={containerRef} className="relative" style={{ width: '100%', height: '400px' }}>
       <div className="mb-4 flex items-center justify-between">
         <h2 className="text-lg font-semibold text-gray-800">Sector Distribution</h2>
-        <div className="group relative">
-          <Info 
-            className="h-5 w-5 cursor-help text-gray-400 transition-colors hover:text-gray-600" 
+        <div>
+          <Info
+            className="h-5 w-5 cursor-help text-gray-400 transition-colors hover:text-gray-600"
             aria-label="Information about sector distribution"
+            onMouseEnter={handleInfoIconMouseEnter}
+            onMouseMove={handleInfoIconMouseMove}
+            onMouseLeave={handleInfoIconMouseLeave}
           />
-          <div className="invisible absolute left-1/2 top-full z-10 mt-2 w-72 -translate-x-1/2 rounded-lg bg-gray-900 px-4 py-3 text-sm text-white opacity-0 shadow-lg transition-all group-hover:visible group-hover:opacity-100">
-            <div className="absolute -top-1 left-1/2 h-2 w-2 -translate-x-1/2 rotate-45 bg-gray-900"></div>
-            This chart shows the distribution of scores across different subsectors for the selected countries and sector.
-          </div>
         </div>
       </div>
       <svg ref={svgRef} className="bg-white" />
       <div ref={tooltipRef} />
+      {showInfoTooltip && (
+        <div
+          ref={infoTooltipRef}
+          className="fixed z-50 w-72 rounded-lg bg-gray-900 px-4 py-3 text-sm text-white shadow-lg"
+          style={{
+            left: infoTooltipPosition.x,
+            top: infoTooltipPosition.y,
+            transform: 'translateX(-50%)',
+          }}
+        >
+          <div className="absolute -top-1 left-1/2 h-2 w-2 -translate-x-1/2 rotate-45 bg-gray-900"></div>
+          This chart shows the distribution of scores across different subsectors for the selected countries and sector.
+        </div>
+      )}
     </div>
   );
 }
