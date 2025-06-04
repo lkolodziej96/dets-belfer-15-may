@@ -288,7 +288,7 @@ export default function WorldMap({
             calculateColorIntensity(singaporeData.total, maxScore, selectedSector),
           )
           .attr('stroke', '#64748b')
-          .attr('stroke-width', selectedCountries.includes('Singapore') ? 3 : 1)
+          .attr('stroke-width', selectedCountries.includes('Singapore') ? 1.5 : 0.75)
           .style(
             'opacity',
             selectedCountries.length && !selectedCountries.includes('Singapore') ? 0.5 : 1,
@@ -308,7 +308,7 @@ export default function WorldMap({
             d3.select(event.currentTarget)
               .transition()
               .duration(200)
-              .attr('stroke-width', '3')
+              .attr('stroke-width', '1.5')
               .attr('stroke', '#4A5568');
           })
           .on('mousemove', (event) => {
@@ -333,7 +333,7 @@ export default function WorldMap({
             d3.select(event.currentTarget)
               .transition()
               .duration(200)
-              .attr('stroke-width', selectedCountries.includes('Singapore') ? 3 : 1)
+              .attr('stroke-width', selectedCountries.includes('Singapore') ? 1.5 : 0.75)
               .attr('stroke', '#64748b');
           });
       }
@@ -358,7 +358,7 @@ export default function WorldMap({
           const mappedName =
             countryNameMap[countryName as keyof typeof countryNameMap] || countryName;
           const isSelected = selectedCountries.includes(mappedName);
-          return isSelected ? 3 : 1;
+          return isSelected ? 1.5 : 0.75;
         })
         .style('opacity', (d: any) => {
           if (!selectedCountries.length) return 1;
@@ -392,7 +392,7 @@ export default function WorldMap({
             d3.select(event.currentTarget)
               .transition()
               .duration(200)
-              .attr('stroke-width', '3')
+              .attr('stroke-width', '1.5')
               .attr('stroke', '#4A5568');
           }
         })
@@ -423,7 +423,7 @@ export default function WorldMap({
               const mappedName =
                 countryNameMap[countryName as keyof typeof countryNameMap] || countryName;
               const isSelected = selectedCountries.includes(mappedName);
-              return isSelected ? 3 : 1;
+              return isSelected ? 1.5 : 0.75;
             })
             .attr('stroke', '#64748b');
         });
