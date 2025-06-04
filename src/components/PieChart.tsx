@@ -1,6 +1,7 @@
 import { useEffect, useRef, useMemo } from 'react';
 
 import * as d3 from 'd3';
+import { Info } from 'lucide-react';
 
 import type { AggregatedCountryData } from '@/data/types';
 import { getSectorColor } from '@/sectors/colors';
@@ -349,6 +350,19 @@ export default function PieChart({
 
   return (
     <div ref={containerRef} className="relative" style={{ width: '100%', height: '400px' }}>
+      <div className="mb-4 flex items-center justify-between">
+        <h2 className="text-lg font-semibold text-gray-800">Sector Distribution</h2>
+        <div className="group relative">
+          <Info 
+            className="h-5 w-5 cursor-help text-gray-400 transition-colors hover:text-gray-600" 
+            aria-label="Information about sector distribution"
+          />
+          <div className="invisible absolute left-1/2 top-full z-10 mt-2 w-72 -translate-x-1/2 rounded-lg bg-gray-900 px-4 py-3 text-sm text-white opacity-0 shadow-lg transition-all group-hover:visible group-hover:opacity-100">
+            <div className="absolute -top-1 left-1/2 h-2 w-2 -translate-x-1/2 rotate-45 bg-gray-900"></div>
+            This chart shows the distribution of scores across different subsectors for the selected countries and sector.
+          </div>
+        </div>
+      </div>
       <svg ref={svgRef} className="bg-white" />
       <div ref={tooltipRef} />
     </div>
