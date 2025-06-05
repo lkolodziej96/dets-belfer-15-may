@@ -32,13 +32,13 @@ const QUANTUM_SUBSECTOR_LABELS = {
 
 const SEMICONDUCTORS_SUBSECTOR_LABELS = {
   chip_design_and_tools: 'Chip Design and Tools',
-  manufacturing: 'Manufacturing',
+  manufacturing: 'Manufacturing and Fabrication',
   economic_resources: 'Economic Resources',
   human_capital: 'Human Capital',
   equipment: 'Equipment',
   'assembly_and_testing_(osat)': 'Assembly and Testing',
   global_player: 'Global Player',
-  raw_materials_and_wafers: 'Specialized Material and Wafers',
+  raw_materials_and_wafers: 'Specialized Materials and Wafers',
   regulatory: 'Regulatory',
 } as const satisfies Record<SemiconductorsSubsectors, string>;
 
