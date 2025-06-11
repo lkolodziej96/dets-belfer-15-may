@@ -6,8 +6,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Critical and Emerging Technologies Dashboard</title>
   </head>
-  <body>
+    <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+    <script>
+      // Redirect only if the page is not embedded in an iframe
+      if (window.top === window.self) {
+        window.location.href = "https://www.belfercenter.org/critical-emerging-tech-index";
+      }
+    </script>
   </body>
+
 </html>
